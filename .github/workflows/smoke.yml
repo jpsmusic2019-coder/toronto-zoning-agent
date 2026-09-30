@@ -1,0 +1,79 @@
+# Copyright © 2026 Joshua Seaton. All rights reserved. Evaluation only; see LICENSE.
+# Manual end-to-end run: install with the README's commands for each OS, run 32 Ardmore
+# with no API key against the live City of Toronto Open Data, check the three outputs and
+# upload them. The checkout step stands in for the README's `git clone` and `cd`.
+name: smoke
+on: workflow_dispatch
+jobs:
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install and run (README, macOS / Linux)
+        shell: bash
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          start=$(date +%s)
+          python -m toronto_zoning_agent --address "32 Ardmore Rd" | tee run.log
+          echo "First run: $(( $(date +%s) - start )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+          start=$(date +%s)
+          python -m toronto_zoning_agent --address "32 Ardmore Rd" > /dev/null
+          echo "Second run: $(( $(date +%s) - start )) s" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Check outputs
+        shell: bash
+        run: |
+          for f in output/zoning/32-ardmore-rd.html output/zoning/32-ardmore-rd.json output/zoning/zoning_reports.xlsx; do
+            test -s "$f" || { echo "missing $f"; exit 1; }
+            echo "$f $(wc -c < "$f") bytes"
+          done
+          grep -q "No ANTHROPIC_API_KEY set" run.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ matrix.os }}
+          path: output/zoning/
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install and run (README, Windows PowerShell)
+        shell: pwsh
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: |
+          py -3.11 -m venv .venv
+          .venv\Scripts\Activate.ps1
+          pip install -r requirements.txt
+          $t = Measure-Command { python -m toronto_zoning_agent --address "32 Ardmore Rd" | Tee-Object -FilePath run.log | Out-Host }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "First run: $([int]$t.TotalSeconds) s" | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          $t = Measure-Command { python -m toronto_zoning_agent --address "32 Ardmore Rd" | Out-Null }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "Second run: $([int]$t.TotalSeconds) s" | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+      - name: Check outputs
+        shell: pwsh
+        run: |
+          foreach ($f in "output/zoning/32-ardmore-rd.html", "output/zoning/32-ardmore-rd.json", "output/zoning/zoning_reports.xlsx") {
+            if (-not (Test-Path $f) -or (Get-Item $f).Length -eq 0) { Write-Error "missing $f"; exit 1 }
+            "$f $((Get-Item $f).Length) bytes"
+          }
+          if (-not (Select-String -Path run.log -Pattern "No ANTHROPIC_API_KEY set" -Quiet)) { Write-Error "no-key note missing"; exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-windows-latest
+          path: output/zoning/

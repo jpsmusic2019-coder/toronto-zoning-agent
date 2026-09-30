@@ -1,0 +1,33 @@
+# Copyright © 2026 Joshua Seaton. All rights reserved. Evaluation only; see LICENSE.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toronto-zoning-agent"
+version = "2.0.0"
+description = "Zoning and Committee of Adjustment precedent for any Toronto lot, from City of Toronto Open Data"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Joshua Seaton" }]
+classifiers = ["License :: Other/Proprietary License", "Private :: Do Not Upload"]
+dependencies = [
+  "httpx>=0.27,<1",
+  "shapely>=2.0,<3",
+  "openpyxl>=3.1,<4",
+  "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+claude = ["anthropic>=0.40"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+toronto-zoning-agent = "toronto_zoning_agent.agent:main"
+
+[tool.setuptools]
+packages = ["toronto_zoning_agent"]
+
+[tool.setuptools.package-data]
+toronto_zoning_agent = ["templates/*.html", "templates/vendor/**/*"]

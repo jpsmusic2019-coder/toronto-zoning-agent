@@ -1,0 +1,2722 @@
+<!doctype html>
+<!-- Copyright © 2026 Joshua Seaton. All rights reserved. Evaluation only; see LICENSE. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23111820%22/%3E%3Crect x=%224%22 y=%224%22 width=%228%22 height=%228%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%221.5%22/%3E%3C/svg%3E">
+<!-- Parcis Zoning Agent report. Rendered by toronto_zoning_agent/report.py: everything on this page
+     comes from the report-data JSON block (schema: docs/report_schema.md).
+     Leaflet 1.9.4 (BSD-2-Clause, see toronto_zoning_agent/templates/vendor/leaflet/LICENSE) and the fonts
+     (Archivo, Public Sans, IBM Plex Mono; SIL OFL 1.1, see toronto_zoning_agent/templates/vendor/fonts/)
+     are inlined below, so the page makes no requests except map tiles. Design: DESIGN.md. -->
+<title>__TITLE__</title>
+<style>
+/*__FONTS_CSS__*/
+</style>
+<style>
+/*__LEAFLET_CSS__*/
+</style>
+<style>
+/* Parcis zoning terminal. Dark by default; light (Cream/Parchment) behind the toggle;
+   print is always light. Tokens and contrast pairs: DESIGN.md (checked by
+   tests/test_zoning_contrast.py). */
+:root {
+  color-scheme: dark;
+  --page: #111820;           /* Midnight */
+  --page-2: #1c2b3a;         /* Ink */
+  --panel: rgba(42, 58, 74, .58);   /* translucent Slate */
+  --panel-solid: #202e3c;
+  --panel-2: rgba(77, 107, 132, .2);
+  --line: rgba(122, 150, 171, .34); /* hairline Slate Blue */
+  --line-strong: #4d6b84;
+  --bracket: #7a96ab;
+  --grid: rgba(122, 150, 171, .035);
+  --grid-major: rgba(122, 150, 171, .05);
+  --glow: rgba(77, 107, 132, .32);
+  --head: #f7f2ea;           /* Cream */
+  --ink: #e4edf4;
+  --ink-2: #b8c8d5;
+  --muted: #a9bccb;
+  --axis: #4d6b84;
+  --accent: #a9c8e0;
+  --accent-wash: rgba(122, 150, 171, .2);
+  --zone: #f0d77a;
+  --zone-ink: #2a2410;
+  --series: #5b9bd5;
+  --permit: #a98be6;
+  --good: #22b14c;
+  --critical: #e0564f;
+  --warning: #fab219;
+  --neutral: #8d959a;
+  --warn-wash: rgba(250, 178, 25, .12);
+  --warn-ink: #f3d68a;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  --toc-bg: rgba(17, 24, 32, .94);
+  --sheet: rgba(28, 43, 58, .46);
+  --nav-bg: rgba(17, 24, 32, .72);
+  --sig-strong-wash: rgba(34, 177, 76, .14);
+  --sig-strong-line: rgba(143, 217, 164, .45);
+  --sig-strong-ink: #8fd9a4;
+  --sig-mixed-wash: rgba(250, 178, 25, .12);
+  --sig-mixed-line: rgba(243, 214, 138, .45);
+  --sig-mixed-ink: #f3d68a;
+  --sig-weak-wash: rgba(224, 86, 79, .14);
+  --sig-weak-line: rgba(245, 168, 168, .45);
+  --sig-weak-ink: #f5a8a8;
+  --sig-sparse-wash: rgba(42, 58, 74, .58);
+  --sig-sparse-line: rgba(122, 150, 171, .45);
+  --sig-sparse-ink: #d5e1ea;
+  --tile-filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.86) saturate(.55) sepia(.18) hue-rotate(168deg);
+  --f-display: "Archivo", "Arial Narrow", sans-serif;
+  --f-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #f7f2ea;           /* Cream */
+  --page-2: #ede5d8;         /* Parchment */
+  --panel: rgba(255, 253, 249, .82);
+  --panel-solid: #fffdf9;
+  --panel-2: #ede5d8;
+  --line: #c5b9ad;           /* Sand */
+  --line-strong: #8a7e72;    /* Stone */
+  --bracket: #4d6b84;
+  --grid: rgba(77, 107, 132, .035);
+  --grid-major: rgba(77, 107, 132, .05);
+  --glow: rgba(197, 185, 173, .45);
+  --head: #111820;
+  --ink: #111820;
+  --ink-2: #4a3f36;          /* Driftwood */
+  --muted: #62574d;
+  --axis: #c5b9ad;
+  --accent: #3e5a72;
+  --accent-wash: #e4edf4;
+  --series: #2a78d6;
+  --permit: #6a3fb5;
+  --good: #0ca30c;
+  --critical: #d03b3b;
+  --warn-wash: #fff4d6;
+  --warn-ink: #6b4a00;
+  --shadow: 0 8px 24px rgba(17, 24, 32, .14);
+  --toc-bg: rgba(247, 242, 234, .95);
+  --sheet: rgba(255, 253, 249, .6);
+  --nav-bg: rgba(247, 242, 234, .8);
+  --sig-strong-wash: #e3f4e6;
+  --sig-strong-line: #b5dfbe;
+  --sig-strong-ink: #166534;
+  --sig-mixed-wash: #fdf1d8;
+  --sig-mixed-line: #efd08b;
+  --sig-mixed-ink: #7a4a06;
+  --sig-weak-wash: #fbe6e6;
+  --sig-weak-line: #eeb9b9;
+  --sig-weak-ink: #991b1b;
+  --sig-sparse-wash: #fffdf9;
+  --sig-sparse-line: #c5b9ad;
+  --sig-sparse-ink: #4a3f36;
+  --tile-filter: none;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--page); }
+body {
+  margin: 0;
+  position: relative;
+  min-height: 100vh;
+  color: var(--ink);
+  font: 17px/1.6 var(--f-body);
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--page);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(180deg, var(--page) 0, var(--page-2) 1400px, var(--page-2) 100%);
+  background-size: 160px 160px, 160px 160px, 32px 32px, 32px 32px, 100% 100%;
+  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px, 0 0;
+}
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 760px;
+  background: radial-gradient(ellipse 60% 70% at 22% 0%, var(--glow), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 64px;
+  display: grid;
+  gap: 44px;
+}
+@media (min-width: 600px) { .wrap { padding-inline: 24px; } }
+h1, h2, h3 { margin: 0; text-wrap: balance; color: var(--head); }
+h1 {
+  font-family: var(--f-display);
+  font-stretch: 87.5%;
+  font-weight: 800;
+  font-size: clamp(34px, 6.4vw, 54px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-family: var(--f-display);
+  font-stretch: 87.5%;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.15;
+}
+h3 { font: 600 15px/1.35 var(--f-body); }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.eyebrow, .sec-no, .t-label, .label {
+  font: 500 12px/1.3 var(--f-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sec-no { color: var(--accent); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* panels: translucent Slate, hairline Slate Blue */
+.card, .tile, .answers, .controls, .table-scroll, details.permits, .planner {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+/* corner brackets: verdict band and KPI tiles only */
+.bracket { position: relative; }
+.bracket::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  --b: var(--bracket);
+  background:
+    linear-gradient(var(--b), var(--b)) top left / 12px 1.5px,
+    linear-gradient(var(--b), var(--b)) top left / 1.5px 12px,
+    linear-gradient(var(--b), var(--b)) top right / 12px 1.5px,
+    linear-gradient(var(--b), var(--b)) top right / 1.5px 12px,
+    linear-gradient(var(--b), var(--b)) bottom left / 12px 1.5px,
+    linear-gradient(var(--b), var(--b)) bottom left / 1.5px 12px,
+    linear-gradient(var(--b), var(--b)) bottom right / 12px 1.5px,
+    linear-gradient(var(--b), var(--b)) bottom right / 1.5px 12px;
+  background-repeat: no-repeat;
+}
+
+/* header */
+.top { display: grid; gap: 12px; }
+.eyebrow-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.badge {
+  font: 500 11.5px/1 var(--f-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+.title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.zone-chip {
+  font: 500 15px/1 var(--f-mono);
+  background: var(--zone);
+  color: var(--zone-ink);
+  border-radius: 4px;
+  padding: 7px 10px;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--ink-2); font: 13px/1.5 var(--f-mono); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a {
+  font: 600 14px/1 var(--f-body);
+  text-decoration: none;
+  color: var(--accent);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 12px;
+}
+.links a:hover { background: var(--accent-wash); }
+
+/* warnings (unchecked sources) */
+.warn {
+  background: var(--warn-wash);
+  color: var(--warn-ink);
+  border: 1px solid var(--warning);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  display: grid;
+  gap: 4px;
+}
+.warn strong { font-weight: 700; }
+.unchecked { color: var(--warn-ink); background: var(--warn-wash); border-radius: 4px; padding: 0 5px; font-weight: 600; }
+
+/* summary: verdict, answers, planner's read */
+.summary-block { display: grid; gap: 16px; }
+.note { font-size: 13px; color: var(--muted); }
+.answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.answer { display: grid; gap: 6px; align-content: start; padding: 18px 20px; }
+.answer + .answer { border-left: 1px solid var(--line); }
+.answer .big { font: 600 21px/1.25 var(--f-body); color: var(--head); }
+.answer .sub { font-size: 14px; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .answers { grid-template-columns: 1fr; }
+  .answer + .answer { border-left: 0; border-top: 1px solid var(--line); }
+}
+.planner { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.planner-read { display: grid; gap: 10px; padding: 22px 26px; }
+.planner-read h2 { font-size: 22px; }
+.lead { font-size: 17px; line-height: 1.65; max-width: 90ch; color: var(--ink); }
+.planner-meta { display: grid; gap: 10px; align-content: start; padding: 22px 24px; border-left: 1px solid var(--line); }
+.planner-meta p { font-size: 13.5px; color: var(--ink-2); }
+@media (max-width: 860px) {
+  .planner { grid-template-columns: minmax(0, 1fr); }
+  .planner-meta { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* sections */
+.block { display: grid; gap: 18px; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head .sub-h { font: 600 16px/1.35 var(--f-body); color: var(--ink); }
+.sec-head p { color: var(--ink-2); max-width: 78ch; }
+.card { padding: 20px; min-width: 0; }
+figure { margin: 0; }
+figcaption { display: grid; gap: 2px; }
+figcaption p { font-size: 13px; color: var(--muted); }
+
+/* as of right */
+.envelope { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 800px) { .envelope { grid-template-columns: 1fr; } }
+.zone-string {
+  font: 500 clamp(22px, 4.2vw, 30px)/1.3 var(--f-mono);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  margin: 8px 0 18px;
+  color: var(--head);
+}
+.zone-string .tok { border-bottom: 3px solid var(--zone); }
+.decode { display: grid; gap: 12px; margin: 0; }
+.decode > div { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.decode dt { font: 500 14px var(--f-mono); overflow-wrap: anywhere; color: var(--ink); }
+.decode dd { margin: 0; color: var(--ink-2); }
+.decode dd strong { color: var(--ink); font-weight: 600; }
+.facts { display: grid; margin: 0; }
+.facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+  gap: 12px;
+  padding-block: 11px;
+  border-top: 1px solid var(--line);
+}
+.facts > div:first-child { border-top: 0; padding-top: 2px; }
+.facts dt { font: 500 12px/1.5 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; color: var(--ink); }
+.facts dd small { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+
+/* history */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; }
+.timeline time { font: 12.5px/1.6 var(--f-mono); color: var(--ink-2); padding-top: 1px; }
+.ev { position: relative; padding: 0 0 20px 22px; display: grid; gap: 3px; }
+.ev::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 6px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  box-shadow: 0 0 0 2px var(--panel-solid);
+}
+.ev::after {
+  content: "";
+  position: absolute;
+  left: 4.5px; top: 18px; bottom: 2px;
+  width: 1px;
+  background: var(--axis);
+}
+.timeline li:last-child .ev { padding-bottom: 0; }
+.timeline li:last-child .ev::after { display: none; }
+.timeline li.now .ev::before { background: var(--panel-solid); box-shadow: inset 0 0 0 2px var(--accent); }
+.timeline li.bad .ev::before { background: var(--critical); }
+.ev h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ev p { font-size: 14px; color: var(--ink-2); max-width: 78ch; }
+.file {
+  font: 500 12px/1.5 var(--f-mono);
+  color: var(--ink-2);
+  background: var(--panel-2);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+a.file { color: var(--accent); text-decoration: none; }
+a.file:hover { text-decoration: underline; }
+@media (max-width: 560px) {
+  .timeline li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .timeline time { padding-left: 22px; }
+}
+
+/* precedent controls */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; padding: 14px 16px; }
+.ctl-radius { display: flex; align-items: center; gap: 10px; }
+.ctl-radius label { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+input[type="range"] { width: 180px; max-width: 42vw; accent-color: var(--accent); }
+output { font: 600 14px var(--f-mono); min-width: 56px; color: var(--head); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font: 500 13px/1 var(--f-body);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.chip .n { color: var(--muted); font: 12px var(--f-mono); }
+.chip:hover { background: var(--accent-wash); }
+.chip[aria-pressed="true"] { background: var(--head); border-color: var(--head); color: var(--page); }
+.chip[aria-pressed="true"] .n { color: inherit; opacity: .8; }
+.chip:disabled { opacity: .45; cursor: default; background: transparent; }
+.ctl-note { font-size: 13px; color: var(--muted); margin-top: -8px; }
+
+/* KPI tiles */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { padding: 16px 18px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.t-value { font: 600 32px/1.1 var(--f-body); color: var(--head); font-variant-numeric: tabular-nums; }
+.t-sub { font-size: 13px; color: var(--muted); }
+
+/* map + charts */
+.viz { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .viz { grid-template-columns: minmax(0, 1fr); } }
+.map-card { display: flex; flex-direction: column; gap: 12px; }
+.map-wrap { position: relative; flex: 1 1 auto; display: flex; min-height: 480px; }
+#map {
+  flex: 1 1 auto;
+  min-height: 480px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--page-2);
+  z-index: 0;
+}
+@media (max-width: 560px) { .map-wrap, #map { min-height: 360px; } }
+.map-note {
+  position: absolute;
+  left: 10px; right: 10px; bottom: 10px;
+  z-index: 500;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.map-fallback { display: grid; place-items: center; text-align: center; padding: 24px; color: var(--ink-2); font-size: 14px; }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend-sub { font-size: 13px; color: var(--muted); }
+.chart-block { display: grid; gap: 12px; }
+.chart-block + .chart-block { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+.bars { display: grid; gap: 14px; }
+.bar-row { display: grid; gap: 5px; }
+.bar-head { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.bar-head .v { color: var(--ink-2); font-family: var(--f-mono); font-size: 13px; }
+.track { display: flex; gap: 2px; height: 10px; min-width: 6px; transform-origin: left center; }
+.seg { flex-basis: 0; height: 100%; }
+.track .seg:last-child { border-radius: 0 4px 4px 0; }
+.seg-approved { background: var(--good); }
+.seg-refused { background: var(--critical); }
+.seg-pending { background: var(--warning); }
+.seg-other { background: var(--neutral); }
+.bar-sub { font-size: 12.5px; color: var(--muted); }
+.srow { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 14px; }
+.sarea { display: flex; align-items: center; gap: 8px; }
+.sbar { height: 12px; background: var(--series); border-radius: 0 4px 4px 0; transform-origin: left center; }
+.sv { font-weight: 600; font-family: var(--f-mono); }
+.empty { font-size: 14px; color: var(--muted); }
+
+/* map markers + popups */
+.mk-icon { background: none; border: 0; }
+.mk-icon svg { display: block; overflow: visible; transition: transform .12s; }
+.mk-icon.hot svg, .mk-icon:hover svg { transform: scale(1.45); }
+.mk-icon.sel svg { transform: scale(1.6); filter: drop-shadow(0 0 2px var(--head)); }
+.m-good { fill: var(--good); stroke: var(--panel-solid); stroke-width: 2; }
+.m-bad { fill: var(--critical); stroke: var(--panel-solid); stroke-width: 2; }
+.m-wait { fill: var(--panel-solid); stroke: var(--warning); stroke-width: 2.5; }
+.m-other { fill: var(--neutral); stroke: var(--panel-solid); stroke-width: 2; }
+.m-subj { fill: var(--head); stroke: var(--page); stroke-width: 2; }
+.m-subj-ring { fill: none; stroke: var(--head); stroke-width: 1.5; }
+.m-pnew { fill: var(--permit); stroke: var(--panel-solid); stroke-width: 1.5; }
+.m-padd { fill: var(--panel-solid); stroke: var(--permit); stroke-width: 2; }
+.m-pdemo { fill: none; stroke: var(--ink-2); stroke-width: 2.5; stroke-linecap: round; }
+.m-poth { fill: var(--muted); stroke: var(--panel-solid); stroke-width: 1; }
+.m-dev { fill: var(--accent); stroke: var(--panel-solid); stroke-width: 2; }
+.leaflet-container { font: 13px/1.45 var(--f-body); background: var(--page-2); }
+#map .leaflet-tile-pane { filter: var(--tile-filter); }
+#map.own-dark-tiles .leaflet-tile-pane { filter: none; }
+.mk-icon.pm svg { opacity: .85; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel-solid); color: var(--ink); box-shadow: var(--shadow); border: 1px solid var(--line); }
+.leaflet-popup-content { margin: 12px 14px; min-width: 220px; }
+.leaflet-container a.leaflet-popup-close-button { color: var(--ink-2); }
+.pop { display: grid; gap: 3px; }
+.pop strong { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--head); }
+.pop .s { color: var(--ink-2); }
+.pop .q { color: var(--ink-2); font-size: 12.5px; margin-top: 2px; }
+.pop .lk { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; }
+.leaflet-control-layers, .leaflet-bar a, .leaflet-control-attribution { background: var(--panel-solid) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+.leaflet-control-attribution a { color: var(--accent) !important; }
+.leaflet-control-scale-line { background: var(--panel-solid); color: var(--ink); border-color: var(--ink-2); }
+.leaflet-control-layers-expanded { font-size: 13px; }
+
+/* tables */
+.table-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.table-bar label { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+select, input[type="search"] {
+  font: 14px var(--f-body);
+  color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+input[type="search"] { flex: 1 1 220px; min-width: 0; max-width: 340px; }
+input[type="search"]::placeholder { color: var(--muted); }
+.count { margin-left: auto; font: 12.5px var(--f-mono); color: var(--muted); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+@media (max-width: 760px) { table { min-width: 900px; } }
+th {
+  text-align: left;
+  font: 500 11.5px/1.3 var(--f-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: var(--panel-2);
+  padding: 0;
+  vertical-align: bottom;
+}
+th button {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+th button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+th.num button { justify-content: flex-end; }
+th .arr { font-size: 10px; opacity: 0; }
+th[aria-sort="ascending"] .arr, th[aria-sort="descending"] .arr { opacity: 1; }
+td { padding: 11px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .sub { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+td.nowrap { white-space: nowrap; }
+tbody tr { cursor: pointer; }
+#ptbody tr { cursor: default; }
+tbody tr:hover td { background: var(--accent-wash); }
+tbody tr.sel td { background: var(--accent-wash); box-shadow: inset 0 1px 0 var(--line-strong), inset 0 -1px 0 var(--line-strong); }
+.addr { font-weight: 600; color: var(--head); }
+.desc { font-size: 13px; color: var(--ink-2); margin-top: 3px; }
+.desc.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.more { all: unset; cursor: pointer; color: var(--accent); font-size: 12.5px; font-weight: 600; margin-top: 3px; }
+.more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+td .pill { white-space: normal; align-items: flex-start; }
+td .pill svg { flex: none; margin-top: 4px; }
+.built { display: block; font: 500 11.5px/1.4 var(--f-body); color: var(--permit); margin-top: 3px; white-space: normal; }
+
+/* links to the City's own pages: a primary human link, the number to paste when it
+   opens a search, and a small raw-data link */
+.city { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 10px; margin-top: 4px; }
+td .copy { font-size: 12.5px; }
+a.src { font: 600 12.5px/1.5 var(--f-body); color: var(--accent); text-decoration: none; white-space: nowrap; }
+a.src:hover { text-decoration: underline; }
+.copy {
+  all: unset;
+  cursor: copy;
+  font: 500 11.5px/1.4 var(--f-mono);
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: 4px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.copy:hover { border-style: solid; }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+a.raw { font: 500 11px/1.5 var(--f-mono); letter-spacing: .04em; color: var(--muted); text-decoration: none; white-space: nowrap; }
+a.raw:hover { color: var(--accent); text-decoration: underline; }
+.bylaw { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.bylaw a { font: 600 13.5px/1.3 var(--f-body); color: var(--accent); text-decoration: none; }
+.bylaw a:hover { text-decoration: underline; }
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 2000;
+  max-width: calc(100vw - 32px);
+  font: 500 13px/1.4 var(--f-mono);
+  color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  padding: 10px 14px;
+  transform: translate(-50%, 8px);
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* record card (side sheet) */
+.recnum, .src-btn {
+  all: unset;
+  cursor: pointer;
+  font: 500 13px/1.4 var(--f-mono);
+  color: var(--accent);
+  border-bottom: 1px dashed var(--line-strong);
+  white-space: nowrap;
+}
+.src-btn { font: 600 12.5px/1.5 var(--f-body); border: 0; }
+.recnum:hover, .src-btn:hover { color: var(--head); border-bottom-style: solid; }
+.recnum:focus-visible, .src-btn:focus-visible, button.file:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+button.file { all: unset; cursor: pointer; font: 500 12px/1.5 var(--f-mono); color: var(--accent); background: var(--panel-2); border-radius: 4px; padding: 1px 6px; }
+button.file:hover { text-decoration: underline; }
+.change li .recnum { display: inline-block; margin-top: 4px; }
+.scrim { position: fixed; inset: 0; z-index: 2400; background: rgba(8, 12, 16, .55); opacity: 0; transition: opacity .2s ease; }
+.scrim.open { opacity: 1; }
+.sheet {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 2500;
+  width: min(600px, 100vw);
+  background: var(--panel-solid);
+  border-left: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateX(100%);
+  transition: transform .24s cubic-bezier(.22, 1, .36, 1);
+}
+.sheet.open { transform: none; }
+:root:not(.motion) .sheet, :root:not(.motion) .scrim { transition: none; }
+.card-open body { overflow: hidden; }
+.sheet { display: flex; flex-direction: column; }
+.sheet-close { all: unset; cursor: pointer; position: sticky; top: 12px; align-self: flex-end; margin: 12px 16px -8px 0; font: 500 12px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--line-strong); border-radius: 999px; padding: 8px 12px; background: var(--panel-solid); z-index: 1; }
+.sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card-in { display: grid; gap: 20px; padding: 22px 26px 40px; }
+.card-head { display: grid; gap: 6px; }
+.mono-h { font: 600 26px/1.2 var(--f-mono); color: var(--head); }
+.card-addr { color: var(--ink-2); }
+.card-head .pill { font-size: 14px; color: var(--ink); }
+.card-sec { display: grid; gap: 10px; }
+.card-sec h3 { font: 500 12px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card-read { font-size: 14px; color: var(--ink-2); }
+.docs { display: grid; gap: 10px; }
+.doc { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.doc.first { border-color: var(--line-strong); }
+.doc p { font-size: 13.5px; color: var(--ink-2); }
+.doc-btn { justify-self: start; font: 600 14px/1 var(--f-body); color: var(--page); background: var(--head); border-radius: 999px; padding: 9px 14px; text-decoration: none; }
+.doc:not(.first) .doc-btn { color: var(--accent); background: transparent; border: 1px solid var(--line-strong); }
+.doc-btn:hover { opacity: .9; }
+.doc-tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.card-fields { display: grid; margin: 0; }
+.card-fields > div { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.card-fields dt { font: 500 12px/1.5 var(--f-mono); letter-spacing: .04em; color: var(--muted); }
+.card-fields dd { margin: 0; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.permit-row { border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; }
+.permit-row > summary { cursor: pointer; display: flex; gap: 10px; align-items: baseline; padding: 10px 0; font-weight: 600; }
+.permit-row > summary .s { font-weight: 400; font-size: 13px; color: var(--ink-2); }
+.raws { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.dev-table { display: grid; gap: 10px; margin-top: 12px; }
+.dev-table h3 { font-size: 17px; }
+
+/* ── Mobbin-style shell: floating pill nav, full-width rounded sheets ── */
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 3000; }
+.skip:focus { left: 12px; background: var(--panel-solid); color: var(--head); padding: 8px 12px; border-radius: 999px; }
+.pillnav {
+  position: fixed; top: 10px; left: 50%; z-index: 2000;
+  transform: translateX(-50%);
+  width: min(1240px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px 7px 18px;
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+}
+.wordmark { font: 800 19px/1 var(--f-display); font-stretch: 87.5%; letter-spacing: .01em; color: var(--head); text-decoration: none; }
+.pill-links { display: flex; align-items: center; gap: 2px; margin: 0 auto; }
+.pill-links a { font: 500 14px/1 var(--f-body); color: var(--ink-2); text-decoration: none; padding: 9px 12px; border-radius: 999px; white-space: nowrap; }
+.pill-links a:hover { color: var(--head); background: var(--accent-wash); }
+.pill-links a[aria-current="true"] { color: var(--page); background: var(--head); }
+.pill-tools { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.pill-tools .theme-btn { border-radius: 999px; }
+.pill-cta { font: 600 13.5px/1 var(--f-body); color: var(--page); background: var(--head); border-radius: 999px; padding: 10px 14px; text-decoration: none; white-space: nowrap; }
+.pill-cta:hover { opacity: .9; }
+.menu-btn { all: unset; display: none; cursor: pointer; font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--head); border: 1px solid var(--line-strong); border-radius: 999px; padding: 9px 12px; }
+.menu-btn:focus-visible, .pill-links a:focus-visible, .wordmark:focus-visible, .pill-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 1080px) {
+  .pill-links a { padding: 9px 8px; font-size: 13px; }
+}
+@media (max-width: 900px) {
+  .pillnav { padding-left: 16px; }
+  .menu-btn { display: inline-block; }
+  .pill-cta { display: none; }
+  .pill-links { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+  .pillnav.menu-open .pill-links { display: flex; }
+  .pill-links a { padding: 12px 14px; font-size: 15px; }
+}
+.sheets { position: relative; z-index: 1; display: grid; gap: 40px; padding: 84px 8px 48px; }
+.sheetx { width: 100%; border-radius: 28px; background: var(--sheet); border: 1px solid var(--line); }
+.sheets > .foot { width: 100%; max-width: 1440px; margin: 0 auto; padding: 16px clamp(16px, 4vw, 60px) 0; }
+.inner { max-width: 1440px; margin: 0 auto; padding: clamp(24px, 4vw, 60px) clamp(16px, 3vw, 60px); display: grid; gap: 32px; min-width: 0; }
+section[id], .block[id], details[id], .sheetx { scroll-margin-top: 84px; }
+@media (max-width: 600px) { .sheets { padding-inline: 6px; gap: 24px; } .sheetx { border-radius: 22px; } }
+
+/* hero */
+.hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 24px; }
+.hero-main { display: grid; gap: 14px; }
+.hero h1 { font-size: clamp(40px, 7vw, 76px); }
+.figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 28px; margin: 14px 0 6px; }
+.fig { display: grid; gap: 4px; align-content: start; }
+.fig-n { font: 700 clamp(30px, 3.4vw, 50px)/1.05 var(--f-display); font-stretch: 87.5%; color: var(--head); font-variant-numeric: tabular-nums; }
+.fig-l { font: 500 12px/1.4 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 760px) { .figs { grid-template-columns: minmax(0, 1fr); } }
+.hero-chips { position: relative; min-height: 260px; }
+.hero-chip {
+  all: unset; cursor: pointer; position: absolute;
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 13px/1 var(--f-mono); color: var(--head);
+  background: var(--panel-solid); border: 1px solid var(--line-strong);
+  border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow);
+}
+.hero-chip:hover { border-color: var(--accent); }
+.hero-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hero-chip .d { color: var(--muted); font-size: 11.5px; }
+.hero-chip:nth-child(1) { top: 6%; left: 8%; } .hero-chip:nth-child(2) { top: 24%; right: 2%; }
+.hero-chip:nth-child(3) { top: 46%; left: 0; } .hero-chip:nth-child(4) { top: 66%; right: 10%; }
+.hero-chip:nth-child(5) { top: 86%; left: 18%; }
+@keyframes drift-a { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(4px, -6px); } }
+@keyframes drift-b { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-5px, 4px); } }
+.motion .hero-chip { animation: drift-a 7s ease-in-out infinite; }
+.motion .hero-chip:nth-child(even) { animation-name: drift-b; animation-duration: 8.5s; }
+.motion .hero-chip:nth-child(3n) { animation-duration: 9.5s; }
+@media (max-width: 1000px) { .hero { grid-template-columns: minmax(0, 1fr); } .hero-chips { display: none; } }
+
+/* planner's read: full sheet width, cited rail */
+.planner { grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); }
+.planner-read { padding: 30px 34px; align-content: start; }
+.planner-read .lead { font-size: 19px; line-height: 1.7; max-width: none; }
+.planner-read h2 { font-size: 30px; }
+.planner-rail { display: grid; gap: 12px; align-content: start; padding: 30px 28px; border-left: 1px solid var(--line); }
+.planner-rail h3 { font: 500 12px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.planner-rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.planner-rail li { display: grid; gap: 2px; font-size: 14px; color: var(--ink-2); }
+.planner-rail .fig-link { font: 600 15px/1.3 var(--f-mono); color: var(--accent); text-decoration: none; }
+.planner-rail .fig-link:hover { text-decoration: underline; }
+@media (max-width: 860px) { .planner { grid-template-columns: minmax(0, 1fr); } .planner-rail { border-left: 0; border-top: 1px solid var(--line); } }
+
+/* map full width, charts in a row below */
+.viz { grid-template-columns: minmax(0, 1fr); }
+.map-wrap, #map { min-height: max(560px, 75vh); }
+@media (max-width: 560px) { .map-wrap, #map { min-height: 60vh; } }
+.charts-row .charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.charts-row .chart-block { padding: 0 24px; }
+.charts-row .chart-block:first-child { padding-left: 0; }
+.charts-row .chart-block:last-child { padding-right: 0; }
+.charts-row .chart-block + .chart-block { border-top: 0; margin-top: 0; padding-top: 0; border-left: 1px solid var(--line); }
+@media (max-width: 1000px) {
+  .charts-row .charts { grid-template-columns: minmax(0, 1fr); }
+  .charts-row .chart-block { padding: 0; }
+  .charts-row .chart-block + .chart-block { border-left: 0; border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+}
+/* map intro: circle draws, zoning fades in, pins pop out from the lot */
+#map.intro-wait .mk-icon svg { opacity: 0; transform: scale(.2); }
+#map.intro-wait .zone-area { opacity: 0; }
+#map.intro-run .mk-icon svg { transition: opacity .3s ease var(--pd, 0ms), transform .45s cubic-bezier(.34, 1.56, .64, 1) var(--pd, 0ms); }
+#map.intro-run .zone-area { transition: opacity .7s ease .55s; }
+@keyframes pin-in { from { opacity: 0; } to { opacity: 1; } }
+#map.map-live .mk-icon:not(.old) { animation: pin-in .28s ease both; }
+#map .mk-icon.pin-out { opacity: 0; transition: opacity .2s ease; }
+
+/* lot history as a scroll story (desktop, motion allowed) */
+.story { position: relative; }
+.story.pinning .story-pin { position: sticky; top: 84px; }
+.story-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.story.pinning .timeline li { opacity: 0; transform: translateY(10px); transition: opacity .45s ease, transform .45s cubic-bezier(.22, 1, .36, 1); }
+.story.pinning .timeline li.shown { opacity: 1; transform: none; }
+.story.pinning .timeline .ev::after { transform: scaleY(0); transform-origin: top center; transition: transform .5s ease; }
+.story.pinning .timeline li.drawn .ev::after { transform: none; }
+
+/* evaluation-copy marks: a quiet label in each sheet's bottom-right padding (never
+   over content), the footer notice, and a page-margin label in print */
+.sheetx { position: relative; }
+.sheetx::after {
+  content: "Parcis · Evaluation copy" / "";
+  position: absolute; right: 24px; bottom: 8px;
+  font: 500 10px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); opacity: .6; pointer-events: none; user-select: none;
+}
+footer .notice { font-family: var(--f-mono); font-size: 12px; letter-spacing: .02em; color: var(--ink-2); }
+@media print {
+  .sheetx::after { display: none; }
+  @page { @bottom-right { content: "Parcis · Evaluation copy"; font: 7pt monospace; color: #8a7e72; } }
+}
+
+/* change + about */
+.change { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .change { grid-template-columns: minmax(0, 1fr); } }
+.change .card { display: grid; gap: 8px; align-content: start; }
+.change ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.change li { font-size: 14px; }
+.change li strong { color: var(--head); }
+.change li .s { display: block; color: var(--ink-2); font-size: 13px; }
+.about { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; }
+@media (max-width: 800px) { .about { grid-template-columns: minmax(0, 1fr); } }
+.about div { display: grid; gap: 6px; align-content: start; }
+.about p, .about li { font-size: 14px; color: var(--ink-2); }
+.about ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+footer { border-top: 1px solid var(--line); padding-top: 16px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+
+/* verdict band: the answer in the first viewport */
+.verdict {
+  --w: var(--sig-sparse-wash); --l: var(--sig-sparse-line); --k: var(--sig-sparse-ink);
+  display: grid;
+  gap: 8px;
+  padding: 20px 24px;
+  border-radius: 8px;
+  background: var(--w);
+  border: 1px solid var(--l);
+}
+.verdict[data-signal="Strong"] { --w: var(--sig-strong-wash); --l: var(--sig-strong-line); --k: var(--sig-strong-ink); }
+.verdict[data-signal="Mixed"] { --w: var(--sig-mixed-wash); --l: var(--sig-mixed-line); --k: var(--sig-mixed-ink); }
+.verdict[data-signal="Weak"] { --w: var(--sig-weak-wash); --l: var(--sig-weak-line); --k: var(--sig-weak-ink); }
+.verdict[data-signal="Unchecked"] { --w: var(--warn-wash); --l: var(--warning); --k: var(--warn-ink); }
+.verdict.bracket::after { --b: var(--k); }
+.sig { display: inline-flex; align-items: center; gap: 8px; font: 500 12.5px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--k); }
+.sig svg { flex: none; }
+.verdict-line { font: 600 clamp(18px, 2.4vw, 22px)/1.4 var(--f-body); color: var(--head); text-wrap: balance; }
+.verdict-sub { font-size: 14px; color: var(--ink-2); }
+
+/* section nav */
+.toc {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline: -16px;
+  padding: 8px 16px;
+  background: var(--toc-bg);
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.toc::-webkit-scrollbar { display: none; }
+.toc a {
+  font: 500 13px/1 var(--f-body);
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.toc a:hover { background: var(--accent-wash); color: var(--head); }
+.toc a[aria-current="true"] { background: var(--accent-wash); color: var(--head); box-shadow: inset 0 -2px 0 var(--accent); }
+.toc .spacer { flex: 1; }
+.theme-btn {
+  all: unset;
+  cursor: pointer;
+  font: 500 11.5px/1 var(--f-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+.theme-btn:hover { background: var(--accent-wash); color: var(--head); }
+.theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 600px) { .toc { margin-inline: -24px; padding-inline: 24px; } }
+section[id], .block[id], details[id] { scroll-margin-top: 64px; }
+
+/* decisions by year */
+.years { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: end; gap: 2px; height: 132px; padding-top: 18px; border-bottom: 1px solid var(--axis); }
+.ycol { position: relative; display: flex; flex-direction: column-reverse; align-items: stretch; gap: 2px; height: 100%; justify-content: flex-start; transform-origin: bottom center; }
+.ycol .seg { flex: none; width: 100%; max-width: 24px; margin-inline: auto; border-radius: 0; }
+.ycol .seg:last-child { border-radius: 4px 4px 0 0; }
+.ycol .n { position: absolute; left: 0; right: 0; text-align: center; font: 11px var(--f-mono); color: var(--ink-2); }
+.yaxis { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; font: 11px var(--f-mono); color: var(--muted); text-align: center; }
+.key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+/* permits table */
+details.permits > summary { cursor: pointer; list-style: none; padding: 18px 20px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+details.permits > summary::-webkit-details-marker { display: none; }
+details.permits > summary .ph { display: grid; gap: 6px; }
+details.permits > summary h2 { font-size: 22px; }
+details.permits > summary h2::before { content: "▸ "; color: var(--muted); }
+details.permits[open] > summary h2::before { content: "▾ "; }
+details.permits > summary > span { font: 12.5px var(--f-mono); color: var(--muted); }
+.permits-body { display: grid; gap: 12px; padding: 0 16px 18px; }
+.permits-body .table-scroll { border-radius: 6px; }
+
+
+/* ── motion: transform and opacity only; none under prefers-reduced-motion (the
+   .motion class is only set when motion is allowed) ── */
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.motion .hero-main > *, .motion .pillnav {
+  animation: rise-in .42s cubic-bezier(.22, 1, .36, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.motion .pillnav { animation-name: none; }
+.motion .reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .5s ease, transform .55s cubic-bezier(.22, 1, .36, 1);
+  transition-delay: calc(var(--d, 0) * 60ms);
+}
+.motion .reveal.in { opacity: 1; transform: none; }
+.motion .track, .motion .sbar { transition: transform 1.4s cubic-bezier(.22, 1, .36, 1); transition-delay: calc(var(--k, 0) * 150ms); }
+.motion .ycol { transition: transform 1.2s cubic-bezier(.22, 1, .36, 1); transition-delay: calc(var(--k, 0) * 90ms); }
+.motion .ycol .n { transition: opacity .4s ease 1.1s; }
+.motion .charts:not(.in) .track, .motion .charts:not(.in) .sbar { transform: scaleX(0); }
+.motion .charts:not(.in) .ycol { transform: scaleY(0); }
+.motion .charts:not(.in) .ycol .n { opacity: 0; }
+
+@media print {
+  :root, :root[data-theme] {
+    color-scheme: light;
+    --page: #ffffff; --page-2: #ffffff; --panel: #ffffff; --panel-solid: #ffffff; --panel-2: #f7f2ea;
+    --sheet: #ffffff; --nav-bg: #ffffff;
+    --line: #c5b9ad; --line-strong: #8a7e72; --bracket: #4d6b84; --head: #111820; --ink: #111820;
+    --ink-2: #4a3f36; --muted: #62574d; --axis: #c5b9ad; --accent: #3e5a72; --accent-wash: #f7f2ea;
+    --series: #2a78d6; --permit: #6a3fb5; --good: #0ca30c; --critical: #d03b3b;
+    --warn-wash: #fff4d6; --warn-ink: #6b4a00;
+    --sig-strong-wash: #e3f4e6; --sig-strong-line: #b5dfbe; --sig-strong-ink: #166534;
+    --sig-mixed-wash: #fdf1d8; --sig-mixed-line: #efd08b; --sig-mixed-ink: #7a4a06;
+    --sig-weak-wash: #fbe6e6; --sig-weak-line: #eeb9b9; --sig-weak-ink: #991b1b;
+    --sig-sparse-wash: #ffffff; --sig-sparse-line: #c5b9ad; --sig-sparse-ink: #4a3f36;
+    --tile-filter: none;
+  }
+  html, body { background: #fff !important; }
+  body { background-image: none !important; }
+  body::before { display: none; }
+  .wrap { gap: 28px; max-width: none; }
+  .sheets { padding: 0; gap: 24px; }
+  .sheetx { border: 0; border-radius: 0; background: none; }
+  .inner { padding: 0; max-width: none; }
+  .story, .story-pin { height: auto !important; position: static !important; }
+  .story .timeline li { opacity: 1 !important; transform: none !important; }
+  .story .timeline .ev::after { transform: none !important; }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .motion .reveal, .motion .hero-main > * { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .motion .charts .track, .motion .charts .sbar, .motion .charts .ycol { transform: none !important; }
+  .motion .charts .ycol .n { opacity: 1 !important; }
+  .pillnav, .hero-chips, .story-bar, .skip, .planner-rail,
+  .controls, .ctl-note, .table-bar, .links, .more, .map-note, .toc, .theme-btn, .toast, .copy, a.raw, .sheet, .scrim,
+  .leaflet-control-container, .leaflet-control-layers { display: none !important; }
+  details.permits:not([open]) { display: none; }
+  .desc.clamp { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  .map-wrap, #map { min-height: 420px; height: 420px; break-inside: avoid; }
+  .card, .tile, .answers, .map-card, .planner, .verdict { break-inside: avoid; }
+  .sec-head, .sec-no { break-after: avoid; }
+  .table-scroll { overflow: visible; border: 0; }
+  table { min-width: 0; font-size: 12px; }
+  tr { break-inside: avoid; }
+  tbody tr.sel td { background: none; box-shadow: none; }
+}
+</style>
+<script>
+  // Theme and motion flags before first paint: dark unless the reader chose light;
+  // motion only when the OS allows it (and switched off if the page script fails).
+  (function () {
+    var root = document.documentElement;
+    try { if (localStorage.getItem('parcis-theme') === 'light') root.dataset.theme = 'light'; } catch (e) {}
+    if (window.matchMedia && !matchMedia('(prefers-reduced-motion: reduce)').matches) root.classList.add('motion');
+    window.addEventListener('error', function () { root.classList.remove('motion'); });
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#summary">Skip to the summary</a>
+<nav class="pillnav" id="pillnav" aria-label="Sections">
+  <a class="wordmark" href="#top" aria-label="Parcis, back to top">Parcis</a>
+  <div class="pill-links" id="pill-links">
+    <a href="#summary">Summary</a>
+    <a href="#envelope">As-of-Right</a>
+    <a href="#history">History</a>
+    <a href="#precedent">Precedent</a>
+    <a href="#records">Applications</a>
+    <a href="#permits">Permits</a>
+    <a href="#change">Signs of Change</a>
+    <a href="#sources">Sources</a>
+  </div>
+  <div class="pill-tools">
+    <button type="button" class="theme-btn" id="theme-btn" aria-label="Switch colour theme">Light</button>
+    <a class="pill-cta" id="pill-xl" hidden>Excel Workbook</a>
+    <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="pill-links">Menu</button>
+  </div>
+</nav>
+
+<main class="sheets" id="top">
+  <div class="sheetx hero-sheet"><div class="inner">
+    <header class="top hero">
+      <div class="hero-main">
+        <div class="eyebrow-row" style="--i:0">
+          <span class="eyebrow">Zoning Report · City of Toronto</span>
+          <span class="badge" id="badge"></span>
+        </div>
+        <div class="title-row" style="--i:1">
+          <h1 id="addr-h"></h1>
+          <span class="zone-chip" id="zone-chip"></span>
+        </div>
+        <div class="meta" id="meta" style="--i:2"></div>
+        <div class="figs" id="figs" style="--i:3" aria-label="Key figures"></div>
+        <nav class="links" id="links" aria-label="Open this lot elsewhere" style="--i:4">
+          <a id="lnk-map" target="_blank" rel="noopener">Google Maps ↗</a>
+          <a id="lnk-sv" target="_blank" rel="noopener">Street View ↗</a>
+        </nav>
+      </div>
+      <div class="hero-chips" id="hero-chips" aria-label="Nearest Committee of Adjustment files"></div>
+    </header>
+
+    <div class="warn" id="warn" role="status" hidden></div>
+
+    <div class="summary-block">
+      <span class="sec-no">01 · Summary</span>
+      <section class="verdict bracket" id="summary" aria-labelledby="verdict-h">
+        <h2 class="vh" id="verdict-h">Bottom Line</h2>
+        <span class="sig" id="sig"></span>
+        <p class="verdict-line" id="verdict-line"></p>
+        <p class="verdict-sub" id="verdict-sub"></p>
+      </section>
+
+      <section class="answers" aria-label="Key answers">
+        <div class="answer"><span class="eyebrow">As-of-Right</span><span class="big" id="a1-big"></span><span class="sub" id="a1-sub"></span></div>
+        <div class="answer"><span class="eyebrow">This Lot</span><span class="big" id="a2-big"></span><span class="sub" id="a2-sub"></span></div>
+        <div class="answer"><span class="eyebrow" id="a3-label"></span><span class="big" id="a3-big"></span><span class="sub" id="a3-sub"></span></div>
+      </section>
+    </div>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+    <section class="planner" aria-labelledby="sum-h">
+      <div class="planner-read">
+        <span class="eyebrow">Interpretation</span>
+        <h2 id="sum-h">Planner's Read</h2>
+        <p class="lead" id="lead"></p>
+        <p class="note" id="lead-note"></p>
+      </div>
+      <aside class="planner-rail" aria-labelledby="cited-h">
+        <h3 id="cited-h">Cited in This Read</h3>
+        <ul id="cited"></ul>
+      </aside>
+    </section>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <section class="block" id="envelope" aria-labelledby="env-h">
+    <div class="sec-head">
+      <span class="sec-no">02 · As-of-Right</span>
+      <h2 id="env-h">What You Can Build As-of-Right</h2>
+      <p class="sub-h">Permitted without a variance or rezoning</p>
+      <p>The zone string decoded, plus the map overlays and plan designations that sit on top of it. The decoder reads the label only, so read the by-law and any exception before design.</p>
+    </div>
+    <div class="envelope">
+      <div class="card">
+        <span class="eyebrow">Zone String</span>
+        <div class="zone-string" id="zone-string"></div>
+        <dl class="decode" id="decode"></dl>
+        <div class="bylaw" id="bylaw" hidden></div>
+      </div>
+      <div class="card">
+        <dl class="facts" id="facts"></dl>
+      </div>
+    </div>
+  </section>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <section class="block" id="history" aria-labelledby="hist-h">
+    <div class="sec-head">
+      <span class="sec-no">03 · History</span>
+      <h2 id="hist-h">This Lot's History</h2>
+      <p>Committee of Adjustment files and building permits recorded for this address, linked by the file numbers the City cites. Each number opens its record card: everything the City publishes for it, and where to get its documents.</p>
+    </div>
+    <div class="story" id="story">
+      <div class="story-pin" id="story-pin">
+        <div class="card story-card">
+          <div class="story-bar" id="story-bar" hidden>
+            <span class="eyebrow" id="story-count"></span>
+            <button type="button" class="chip" id="story-all">Show all</button>
+          </div>
+          <ol class="timeline" id="timeline"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <section class="block" id="precedent" aria-labelledby="prec-h">
+    <div class="sec-head">
+      <span class="sec-no">04 · Precedent</span>
+      <h2 id="prec-h">What the Neighbours Got Approved</h2>
+      <p>Committee of Adjustment applications near this lot. The radius and project type below apply to everything in this section, including the map.</p>
+    </div>
+    <div class="controls">
+      <div class="ctl-radius">
+        <label for="radius">Radius</label>
+        <input type="range" id="radius" min="50" step="25">
+        <output id="radius-out" for="radius"></output>
+      </div>
+      <div class="chips" id="type-chips" role="group" aria-label="Project type"></div>
+    </div>
+    <p class="ctl-note" id="ctl-note"></p>
+
+    <div class="tiles">
+      <div class="tile bracket"><span class="t-label">Applications</span><span class="t-value" id="t-apps"></span><span class="t-sub" id="t-apps-s"></span></div>
+      <div class="tile bracket"><span class="t-label">Approval Rate</span><span class="t-value" id="t-rate"></span><span class="t-sub" id="t-rate-s"></span></div>
+      <div class="tile bracket"><span class="t-label">New Houses Approved</span><span class="t-value" id="t-nh"></span><span class="t-sub" id="t-nh-s"></span></div>
+      <div class="tile bracket"><span class="t-label">Typical Time to Hearing</span><span class="t-value" id="t-time"></span><span class="t-sub" id="t-time-s"></span></div>
+    </div>
+
+    <div class="viz">
+      <figure class="card map-card" id="map-card">
+        <figcaption>
+          <h3>Where They Are</h3>
+          <p>Positions from the City's address points, on the City's own basemap. Use the layer button to show zoning areas, permits and the height overlay. Click a pin to find it in the table.</p>
+        </figcaption>
+        <div class="map-wrap">
+          <div id="map" role="region" aria-label="Map of applications and permits near this lot"></div>
+          <div class="map-note" id="map-note" hidden></div>
+        </div>
+        <ul class="legend" id="legend"></ul>
+        <p class="legend-sub" id="permit-line"></p>
+      </figure>
+    </div>
+    <div class="charts-row">
+      <figure class="card charts">
+        <div class="chart-block">
+          <figcaption>
+            <h3>Outcomes by Project Type</h3>
+            <p>Bar length is the number of applications.</p>
+          </figcaption>
+          <div class="bars" id="type-bars"></div>
+        </div>
+        <div class="chart-block">
+          <figcaption>
+            <h3>New Houses Approved, by Storeys</h3>
+            <p>Read from each application's description.</p>
+          </figcaption>
+          <div class="bars" id="storey-bars"></div>
+        </div>
+        <div class="chart-block">
+          <figcaption>
+            <h3>Decisions by Hearing Year</h3>
+            <p>Approved and refused files, so you can see whether the precedent is recent.</p>
+          </figcaption>
+          <div id="year-chart"></div>
+        </div>
+      </figure>
+    </div>
+
+    <div class="table-bar" id="records">
+      <label for="outcome">Outcome</label>
+      <select id="outcome">
+        <option value="All">All</option>
+        <option value="Approved">Approved</option>
+        <option value="Refused">Refused</option>
+        <option value="Pending">Awaiting hearing</option>
+        <option value="Other">Deferred, withdrawn or no decision</option>
+      </select>
+      <label for="q" class="vh">Search applications</label>
+      <input type="search" id="q" placeholder="Search address, description or file number">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <caption class="vh">Neighbour applications</caption>
+        <colgroup>
+          <col style="width:84px"><col><col style="width:150px"><col style="width:150px"><col style="width:136px"><col style="width:150px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="num" data-k="d"><button type="button">Dist. (m) <span class="arr"></span></button></th>
+            <th data-k="addr"><button type="button">Address and What Was Asked <span class="arr"></span></button></th>
+            <th data-k="type"><button type="button">Project <span class="arr"></span></button></th>
+            <th data-k="outcome"><button type="button">Outcome <span class="arr"></span></button></th>
+            <th data-k="hearing"><button type="button">Hearing <span class="arr"></span></button></th>
+            <th data-k="ref"><button type="button">File <span class="arr"></span></button></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <details class="permits" id="permits">
+    <summary><span class="ph"><span class="sec-no">05 · Permits</span><h2>Building Permits Nearby</h2></span><span id="permits-count"></span></summary>
+    <div class="permits-body">
+      <p class="note">Permits grouped into projects by permit-number root (for example BLD, PLB and DRN permits for one house). The radius slider above applies here too. The City's permit status site has no direct link for a permit, so each project opens its search with the permit number copied for you.</p>
+      <div class="table-bar">
+        <label for="pcat">Category</label>
+        <select id="pcat">
+          <option value="All">All</option>
+          <option value="New building">New building</option>
+          <option value="Demolition">Demolition</option>
+          <option value="Addition or alteration">Addition or alteration</option>
+          <option value="Other">Other work</option>
+        </select>
+        <label for="pq" class="vh">Search permits</label>
+        <input type="search" id="pq" placeholder="Search address, description or permit number">
+        <span class="count" id="pcount"></span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <caption class="vh">Building-permit projects near this lot</caption>
+          <colgroup>
+            <col style="width:84px"><col><col style="width:116px"><col style="width:116px"><col style="width:124px"><col style="width:100px"><col style="width:120px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="num"><button type="button" data-pk="d">Dist. (m) <span class="arr">▲</span></button></th>
+              <th><button type="button" data-pk="addr">Address and Work <span class="arr"></span></button></th>
+              <th><button type="button" data-pk="category">Category <span class="arr"></span></button></th>
+              <th><button type="button" data-pk="status_text">Status <span class="arr"></span></button></th>
+              <th><button type="button" data-pk="applied">Applied · Issued <span class="arr"></span></button></th>
+              <th class="num"><button type="button" data-pk="cost">Est. Cost <span class="arr"></span></button></th>
+              <th><button type="button" data-pk="root">Permit <span class="arr"></span></button></th>
+            </tr>
+          </thead>
+          <tbody id="ptbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <section class="block" id="change" aria-labelledby="chg-h">
+    <div class="sec-head">
+      <span class="sec-no">06 · Signs of Change</span>
+      <h2 id="chg-h">Signs of Change</h2>
+      <p>Neighbours' activity that could shift what gets approved here next.</p>
+    </div>
+    <div class="change">
+      <div class="card">
+        <h3>Waiting for a Hearing</h3>
+        <ul id="chg-pending"></ul>
+      </div>
+      <div class="card">
+        <h3>Severance Attempts</h3>
+        <ul id="chg-sever"></ul>
+      </div>
+      <div class="card">
+        <h3>Development Applications</h3>
+        <ul id="chg-devapps"></ul>
+      </div>
+    </div>
+    <div class="dev-table">
+      <div class="table-bar"><h3>All Development Applications Nearby</h3><span class="count" id="dcount"></span></div>
+      <p class="note">Rezonings and Official Plan amendments, site plans, subdivisions, condominiums and part lot control, as the City classifies them. Signs of Change above lists only open applications and ones submitted in the last 3 years.</p>
+      <div class="table-scroll">
+        <table>
+          <caption class="vh">Development applications near this lot</caption>
+          <colgroup><col style="width:84px"><col><col style="width:170px"><col style="width:130px"><col style="width:112px"><col style="width:180px"></colgroup>
+          <thead><tr><th class="num"><button type="button" tabindex="-1">Dist. (m)</button></th><th><button type="button" tabindex="-1">Address and Proposal</button></th><th><button type="button" tabindex="-1">Type</button></th><th><button type="button" tabindex="-1">Status</button></th><th><button type="button" tabindex="-1">Submitted</button></th><th><button type="button" tabindex="-1">Application</button></th></tr></thead>
+          <tbody id="dtbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  </div></div>
+
+  <div class="sheetx"><div class="inner">
+  <section class="block" id="sources" aria-labelledby="about-h">
+    <div class="sec-head">
+      <span class="sec-no">07 · Sources</span>
+      <h2 id="about-h">Sources and Method</h2>
+      <p>Where every number comes from, how it's counted, and what this report can't tell you.</p>
+    </div>
+    <div class="about card">
+      <div>
+        <h3>Sources</h3>
+        <p>City of Toronto Open Data, pulled at run time:</p>
+        <ul id="source-list"></ul>
+        <p id="trace-note"></p>
+      </div>
+      <div>
+        <h3>How the Numbers Are Made</h3>
+        <p>Every count, distance and date comes from fixed rules applied to those records. The approval rate counts approved and refused decisions only; deferred, withdrawn and undecided files are listed but not counted. Precedent is Strong at 80% or more approved, Mixed at 50–79%, Weak below 50%, and too few to call below 3 decided files.</p>
+        <p>Project type comes from the City's own application sub-type (new house or addition), refined by keywords for pools, decks, legalizations and severances. Storeys are read from new-house descriptions. Time to hearing is a median, from filing to hearing. A variance counts as built when a building permit's description cites its decision number.</p>
+      </div>
+      <div>
+        <h3>Limits</h3>
+        <p id="limits"></p>
+      </div>
+      <div>
+        <h3>Data Completeness for This Run</h3>
+        <ul id="completeness"></ul>
+      </div>
+    </div>
+  </section>
+  </div></div>
+
+  <footer class="foot" id="foot"></footer>
+</main>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="sheet" id="card" role="dialog" aria-modal="true" aria-labelledby="card-h" hidden>
+  <button type="button" class="sheet-close" id="card-close" aria-label="Close the record card">Close ✕</button>
+  <div id="card-body"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="application/json" id="report-data">__REPORT_DATA__</script>
+<script>
+/*__LEAFLET_JS__*/
+</script>
+<script>
+(() => {
+  const R = JSON.parse(document.getElementById('report-data').textContent);
+  const $ = (s, root = document) => root.querySelector(s);
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  const TYPES = ['New house', 'Addition or alteration', 'Pool, deck or exterior', 'Legalize existing work', 'Severance or consent', 'Other'];
+  const OUT = {
+    Approved: { cls: 'm-good', label: 'Approved', order: 0 },
+    Refused: { cls: 'm-bad', label: 'Refused', order: 1 },
+    Pending: { cls: 'm-wait', label: 'Awaiting hearing', order: 2 },
+    Other: { cls: 'm-other', label: 'Deferred, withdrawn or no decision', order: 3 },
+  };
+  const PERMIT = {
+    'New building': { cls: 'm-pnew', label: 'Permit: new building', on: true },
+    'Demolition': { cls: 'm-pdemo', label: 'Permit: demolition', on: true },
+    'Addition or alteration': { cls: 'm-padd', label: 'Permit: addition or alteration', on: true },
+    'Other': { cls: 'm-poth', label: 'Permit: other work', on: false },
+  };
+  const permitKind = cat => (cat === 'Other' ? 'PermitOther' : cat);
+  const ZONE_BASE = {
+    RD: 'Detached houses are the base permitted building type.',
+    RS: 'Semi-detached and detached houses are permitted.',
+    RT: 'Townhouses, semi-detached and detached houses are permitted.',
+    RM: 'Multiple-dwelling buildings and lower-density forms are permitted.',
+    R: 'All low-rise residential building types are permitted.',
+    RA: 'Apartment buildings are the base permitted building type.',
+    CR: 'A mix of commercial and residential uses is permitted.',
+  };
+  const ZONE_FILL = {
+    residential: '#b98b00', mixed: '#d9772e', commercial: '#dd6b6b', employment: '#9b7fd1',
+    institutional: '#5f9fd6', 'open space': '#63b263', utility: '#a3a3a3', other: '#bdbdbd',
+  };
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-').map(Number); return `${d} ${MON[m - 1]} ${y}`; };
+  const fmtMonth = iso => { if (!iso) return ''; const [y, m] = iso.split('-').map(Number); return `${MON[m - 1]} ${y}`; };
+  const storeyTxt = s => (s == null ? '' : s === 2.5 ? '2½' : String(s));
+  const weeks = d => Math.floor(d / 7 + 0.5); // half up, like zoning_rules.weeks
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const median = arr => {
+    if (!arr.length) return null;
+    const s = [...arr].sort((a, b) => a - b);
+    const k = s.length >> 1;
+    return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2;
+  };
+  const money = v => '$' + Number(v).toLocaleString('en-CA');
+  const el = (tag, attrs = {}, ...kids) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else e.setAttribute(k, v);
+    }
+    kids.forEach(k => k != null && e.append(k));
+    return e;
+  };
+  const svgEl = (tag, attrs = {}) => {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+  const C = R.completeness || {};
+  const unchecked = k => C[k] === 'unchecked';
+  const SRC = R.source_names || {};
+
+  // ---------- derived ----------
+  const Z = R.zone || {};
+  const tokOf = key => (Z.tokens || []).find(t => t.key === key);
+  const zoneName = Z.name || Z.code || 'Zone';
+  const cutoff = (R.stats.timing && R.stats.timing.cutoff) || '';
+  const maxR = R.radius_m;
+  const state = { radius: maxR, type: 'All', outcome: 'All', q: '', sortKey: 'd', sortDir: 1, expanded: new Set(), sel: null };
+
+  const within = r => R.records.filter(x => x.d <= r);
+  const scoped = () => within(state.radius).filter(x => state.type === 'All' || x.type === state.type);
+  const decided = rs => rs.filter(x => x.outcome === 'Approved' || x.outcome === 'Refused');
+  const matchesQ = x => {
+    const q = state.q.trim().toLowerCase();
+    return !q || `${x.addr} ${x.desc} ${x.ref || ''} ${x.root || ''} ${x.type || ''} ${x.category || ''}`.toLowerCase().includes(q);
+  };
+  const tableRows = rs => rs.filter(x => (state.outcome === 'All' || x.outcome === state.outcome) && matchesQ(x));
+  function timing(rs) {
+    const dec = decided(rs).filter(x => x.days != null);
+    const recent = dec.filter(x => x.filed >= cutoff);
+    return { recent: median(recent.map(x => x.days)), nRecent: recent.length, all: median(dec.map(x => x.days)), nAll: dec.length };
+  }
+  function typicalWeeks(t) {
+    if (t.nRecent >= 3) return { w: weeks(t.recent), recent: true };
+    if (t.nAll >= 3) return { w: weeks(t.all), recent: false };
+    return null;
+  }
+
+  // ---------- marker shapes ----------
+  function shape(kind, x, y) {
+    if (kind === 'Approved') return svgEl('circle', { cx: x, cy: y, r: 5.5, class: 'm-good' });
+    if (kind === 'Refused') return svgEl('rect', { x: x - 5, y: y - 5, width: 10, height: 10, class: 'm-bad' });
+    if (kind === 'Pending') return svgEl('circle', { cx: x, cy: y, r: 4.5, class: 'm-wait' });
+    if (kind === 'Other') { const s = 6; return svgEl('path', { d: `M${x} ${y - s}L${x + s} ${y}L${x} ${y + s}L${x - s} ${y}Z`, class: 'm-other' }); }
+    if (kind === 'New building') return svgEl('path', { d: `M${x} ${y - 5.5}L${x + 5.5} ${y + 4.5}L${x - 5.5} ${y + 4.5}Z`, class: 'm-pnew' });
+    if (kind === 'Addition or alteration') return svgEl('path', { d: `M${x} ${y - 5}L${x + 5} ${y + 4}L${x - 5} ${y + 4}Z`, class: 'm-padd' });
+    if (kind === 'Demolition') return svgEl('path', { d: `M${x - 4} ${y - 4}L${x + 4} ${y + 4}M${x + 4} ${y - 4}L${x - 4} ${y + 4}`, class: 'm-pdemo' });
+    if (kind === 'Rezoning') return svgEl('rect', { x: x - 5, y: y - 5, width: 10, height: 10, rx: 2, transform: `rotate(45 ${x} ${y})`, class: 'm-dev' });
+    return svgEl('circle', { cx: x, cy: y, r: 3, class: 'm-poth' });
+  }
+  function icon(kind, size = 14) {
+    const s = svgEl('svg', { width: size, height: size, viewBox: '-1 -1 14 14', 'aria-hidden': 'true' });
+    s.append(shape(kind, 6, 6));
+    return s;
+  }
+  function subjectIcon(size = 16) {
+    const s = svgEl('svg', { width: size, height: size, viewBox: '0 0 16 16', 'aria-hidden': 'true' });
+    s.append(svgEl('circle', { cx: 8, cy: 8, r: 7, class: 'm-subj-ring' }), svgEl('circle', { cx: 8, cy: 8, r: 3.5, class: 'm-subj' }));
+    return s;
+  }
+
+  // ---------- static parts ----------
+  function warnBanner() {
+    const miss = (R.unchecked_sources || []).map(k => SRC[k] || k);
+    if (!miss.length) return;
+    const w = $('#warn');
+    w.hidden = false;
+    w.append(el('strong', { text: 'Some City data couldn’t be checked for this run.' }),
+      el('span', { text: `Not reached: ${miss.join(', ')}. Anything shown as "couldn’t be checked" is missing data, not a finding that there are no records. Rerun when the City’s Open Data service is reachable.` }));
+  }
+
+  // ---------- links to the City's own pages ----------
+  // Primary: the file's own page when a verified deep link exists (link.kind "record"),
+  // else the site's search page, with the number shown beside it and copied on click.
+  // Secondary: a small "Raw data" link to the Open Data row. Neither triggers its row.
+  let toastTimer = 0;
+  function toast(text) {
+    const t = $('#toast');
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+  function copyText(text) {
+    const fallback = () => {
+      const ta = el('textarea', { readonly: '', 'aria-hidden': 'true' });
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.append(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      return ok;
+    };
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(() => true, fallback);
+    return Promise.resolve(fallback());
+  }
+  function copyNumber(number, site) {
+    copyText(number).then(ok => toast(ok ? `${number} copied, paste it into the search` : `Search the ${site} for ${number}`));
+  }
+  // ---------- record cards ----------
+  // Every CoA file, permit project and development application opens a side sheet with
+  // everything the City publishes for it and where to get its documents. Deep link: #<id>.
+  const REC = new Map();
+  [R.records, R.permits, R.devapps, R.subject.coa, R.subject.permits].forEach(list => (list || []).forEach(x => REC.set(x.id, x)));
+  const recKind = id => (id.startsWith('sp') || id.startsWith('p') ? 'permit' : id.startsWith('d') ? 'devapp' : 'coa');
+  const recNumber = x => x.ref || x.root || x.no || '';
+  const byNumber = new Map();
+  REC.forEach(x => { const n = recNumber(x); if (n && !byNumber.has(n)) byNumber.set(n, x); });
+  // A file or permit number that opens its card.
+  function numButton(x, text, cls = 'recnum') {
+    const n = text || recNumber(x);
+    if (!x || !n) return el('span', { class: 'mono', text: n || '–' });
+    const b = el('button', { type: 'button', class: cls, 'aria-haspopup': 'dialog', title: `Open the record card for ${recNumber(x)}`, text: n });
+    b.addEventListener('click', e => { e.stopPropagation(); openCard(x.id, b); });
+    return b;
+  }
+  function rawLinks(x) {
+    const box = el('span', { class: 'raws' });
+    [[x.src, 'Raw data'], [x.src_other, 'More raw data']].forEach(([u, t]) => {
+      if (u) box.append(el('a', { class: 'raw', href: u, target: '_blank', rel: 'noopener', text: `${t} ↗`, title: 'The Open Data row this record came from (JSON)' }));
+    });
+    return box;
+  }
+  function docsBlock(x) {
+    const box = el('div', { class: 'docs' });
+    (x.docs || []).forEach((r, i) => {
+      const item = el('div', { class: 'doc' + (i === 0 ? ' first' : '') });
+      const a = el('a', { class: 'doc-btn', href: r.url, target: r.url.startsWith('mailto:') ? '_self' : '_blank', rel: 'noopener', text: `${r.label}${r.url.startsWith('mailto:') ? '' : ' ↗'}` });
+      if (r.action === 'status') a.addEventListener('click', () => copyNumber(r.number, 'Building Application Status'));
+      item.append(a, el('p', { text: r.detail || '' }));
+      const tools = el('div', { class: 'doc-tools' });
+      if (r.action === 'status' && r.number) {
+        const c = el('button', { type: 'button', class: 'copy', text: `Copy ${r.number}` });
+        c.addEventListener('click', () => copyNumber(r.number, 'Building Application Status'));
+        tools.append(c);
+      }
+      if (r.email) tools.append(el('a', { class: 'raw', href: `mailto:${r.email}?subject=${encodeURIComponent('Building records: ' + r.number)}`, text: r.email }));
+      if (tools.children.length) item.append(tools);
+      box.append(item);
+    });
+    return box;
+  }
+  function fieldList(fields) {
+    const dl = el('dl', { class: 'card-fields' });
+    (fields || []).forEach(([k, v]) => dl.append(el('div', {}, el('dt', { text: k }), el('dd', { text: v }))));
+    return dl;
+  }
+  function cardContent(x) {
+    const kind = recKind(x.id);
+    const body = el('div', { class: 'card-in' });
+    const eyebrow = kind === 'coa' ? `Committee of Adjustment · ${x.app || 'Application'}` : kind === 'permit' ? `Building permit project · ${x.category || ''}` : `Development application · ${x.type_name || x.type}`;
+    const head = el('header', { class: 'card-head' },
+      el('span', { class: 'eyebrow', text: eyebrow }),
+      el('h2', { id: 'card-h', class: 'mono-h', text: recNumber(x) }),
+      el('p', { class: 'card-addr', text: `${x.addr || R.address}${x.d ? ` · ${x.d} m from the lot` : x.d === 0 ? ' · this lot' : ''}` }));
+    if (kind === 'coa') head.append(el('span', { class: 'pill' }, icon(x.outcome), el('span', { text: x.label })));
+    if (kind === 'permit') head.append(el('span', { class: 'pill' }, icon(permitKind(x.category)), el('span', { text: `Status: ${x.status_text || x.status || 'not recorded'}` })));
+    if (kind === 'devapp') head.append(el('span', { class: 'pill', text: `${x.status}${x.open ? ' · open' : ''}` }));
+    body.append(head);
+    body.append(el('section', { class: 'card-sec', 'aria-label': 'Get the documents' }, el('h3', { text: 'Get the Documents' }), docsBlock(x)));
+    if (kind === 'coa' && (x.type || x.days != null)) {
+      const bits = [`Project type: ${x.type}`];
+      if (x.storeys) bits.push(`${storeyTxt(x.storeys)} storeys`);
+      if (x.days != null) bits.push(`${x.days} days (${weeks(x.days)} weeks) from filing to hearing`);
+      if (x.permits && x.permits.length) bits.push(`built under permit ${x.permits.join(', ')}`);
+      body.append(el('p', { class: 'card-read', text: `Parcis reading: ${bits.join(' · ')}.` }));
+    }
+    if (kind === 'permit') {
+      const bits = [`${x.types.join('; ')}`];
+      if (x.cost != null) bits.push(x.cost_unreliable ? `declared value ${money(x.cost)} (unreliable)` : `declared value ${money(x.cost)}`);
+      if (x.linked_coa.length) bits.push(`cites variance ${x.linked_coa.join(', ')}`);
+      body.append(el('p', { class: 'card-read', text: `Project: ${bits.join(' · ')}.` }));
+      const sec = el('section', { class: 'card-sec' }, el('h3', { text: `Permits in This Project (${(x.permit_rows || []).length})` }));
+      (x.permit_rows || []).forEach(pr => {
+        const st = (pr.fields.find(f => f[0] === 'Status') || [])[1] || '';
+        sec.append(el('details', { class: 'permit-row', open: '' }, el('summary', {}, el('span', { class: 'mono', text: pr.num }), el('span', { class: 's', text: st })),
+          fieldList(pr.fields.filter(f => f[0] !== 'Permit number')), el('p', { class: 'note', text: `From ${pr.dataset}.` })));
+      });
+      body.append(sec);
+    } else {
+      body.append(el('section', { class: 'card-sec' }, el('h3', { text: 'What the City Publishes' }), fieldList(x.fields)));
+    }
+    const src = el('section', { class: 'card-sec card-src' }, el('h3', { text: 'Source' }),
+      el('p', { text: `${x.dataset || (kind === 'permit' ? 'Building Permits' : 'City of Toronto Open Data')}, City of Toronto Open Data. Retrieved ${R.generated_at || fmtDate(R.generated)}.` }), rawLinks(x));
+    const ll = el('span', { class: 'raws' });
+    if (x.links && x.links.map) ll.append(el('a', { class: 'raw', href: x.links.map, target: '_blank', rel: 'noopener', text: 'Google Maps ↗' }));
+    if (x.links && x.links.street_view) ll.append(el('a', { class: 'raw', href: x.links.street_view, target: '_blank', rel: 'noopener', text: 'Street View ↗' }));
+    src.append(ll);
+    body.append(src);
+    return body;
+  }
+  let cardOpener = null;
+  function openCard(id, opener) {
+    const x = REC.get(id);
+    if (!x) return;
+    const sheet = $('#card');
+    cardOpener = opener || document.activeElement;
+    $('#card-body').replaceChildren(cardContent(x));
+    sheet.hidden = false;
+    $('#scrim').hidden = false;
+    document.documentElement.classList.add('card-open');
+    requestAnimationFrame(() => { sheet.classList.add('open'); $('#scrim').classList.add('open'); });
+    $('#card-close').focus();
+    if (location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
+  }
+  function closeCard() {
+    const sheet = $('#card');
+    if (sheet.hidden) return;
+    sheet.classList.remove('open');
+    $('#scrim').classList.remove('open');
+    document.documentElement.classList.remove('card-open');
+    const done = () => { sheet.hidden = true; $('#scrim').hidden = true; };
+    if (document.documentElement.classList.contains('motion')) setTimeout(done, 220); else done();
+    if (REC.has(location.hash.slice(1))) history.replaceState(null, '', location.pathname + location.search);
+    if (cardOpener && document.contains(cardOpener)) cardOpener.focus();
+  }
+  function setupCards() {
+    $('#card-close').addEventListener('click', closeCard);
+    $('#scrim').addEventListener('click', closeCard);
+    $('#card').addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); closeCard(); return; }
+      if (e.key !== 'Tab') return;
+      const f = [...$('#card').querySelectorAll('a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    const fromHash = () => { const id = location.hash.slice(1); if (REC.has(id)) openCard(id); else closeCard(); };
+    window.addEventListener('hashchange', fromHash);
+    if (REC.has(location.hash.slice(1))) openCard(location.hash.slice(1));
+  }
+
+  const SIGNAL = {
+    Strong: { label: 'Strong precedent', icon: 'check' },
+    Mixed: { label: 'Mixed precedent', icon: 'half' },
+    Weak: { label: 'Weak precedent', icon: 'cross' },
+    Sparse: { label: 'Too few decisions to call', icon: 'ring' },
+    Unchecked: { label: 'Couldn’t be checked', icon: 'warn' },
+  };
+  function sigIcon(kind) {
+    const s = svgEl('svg', { width: 16, height: 16, viewBox: '0 0 16 16', 'aria-hidden': 'true' });
+    const stroke = { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+    if (kind === 'warn') {
+      s.append(svgEl('path', { d: 'M8 1.8 15 14.2H1Z', ...stroke }), svgEl('path', { d: 'M8 6.2v3.6M8 12h.01', ...stroke }));
+      return s;
+    }
+    s.append(svgEl('circle', { cx: 8, cy: 8, r: 6.8, ...stroke }));
+    if (kind === 'check') s.append(svgEl('path', { d: 'M4.8 8.2 7 10.4l4.2-4.6', ...stroke }));
+    if (kind === 'cross') s.append(svgEl('path', { d: 'M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8', ...stroke }));
+    if (kind === 'half') s.append(svgEl('path', { d: 'M8 1.2a6.8 6.8 0 0 1 0 13.6Z', fill: 'currentColor' }));
+    return s;
+  }
+  function renderVerdict() {
+    const v = $('#summary');
+    const sig = unchecked('neighbour_coa') ? 'Unchecked' : (R.stats.signal || 'Sparse');
+    v.dataset.signal = sig;
+    const info = SIGNAL[sig] || SIGNAL.Sparse;
+    $('#sig').replaceChildren(sigIcon(info.icon), el('span', { text: info.label }));
+    const rs = within(maxR), dec = decided(rs), ap = dec.filter(x => x.outcome === 'Approved');
+    let line;
+    if (sig === 'Unchecked') line = 'Neighbour precedent couldn’t be checked: the City’s data wasn’t reachable for this run.';
+    else if (dec.length) line = `${ap.length} of ${dec.length} decided Committee of Adjustment applications within ${maxR} m were approved (${Math.round(ap.length / dec.length * 100)}%).`;
+    else if (rs.length) line = `${plural(rs.length, 'application is', 'applications are')} on file within ${maxR} m, none decided yet.`;
+    else line = `No Committee of Adjustment applications are on record within ${maxR} m, so there is no nearby precedent either way.`;
+    $('#verdict-line').textContent = line;
+    const bits = [];
+    const h = R.envelope.height_m, fsi = tokOf('fsi');
+    if (Z.code) bits.push(`${Z.code} zone${h ? `, ${h} m height` : ''}${fsi ? `, ${fsi.value} FSI` : ''}`);
+    const tw = typicalWeeks(timing(rs));
+    if (tw && sig !== 'Unchecked') bits.push(`${tw.recent ? 'recent hearings' : 'hearings'} a median ${tw.w} weeks after filing`);
+    const pend = rs.filter(x => x.outcome === 'Pending').length;
+    if (pend) bits.push(`${plural(pend, 'neighbour awaiting a hearing', 'neighbours awaiting a hearing')}`);
+    const oz = R.devapps.filter(d => d.type === 'OZ').length;
+    if (oz) bits.push(plural(oz, 'rezoning or Official Plan amendment nearby', 'rezonings or Official Plan amendments nearby'));
+    $('#verdict-sub').textContent = bits.length ? bits.join(' · ').replace(/^./, c => c.toUpperCase()) + '.' : '';
+  }
+
+  // ---------- hero: key figures (count up once on load) and nearest file chips ----------
+  function countUpOnce(e, to, fmt, dur = 1600) {
+    e._fmt = fmt;
+    if (!MOTION) { e.textContent = fmt(to); return; }
+    e.textContent = fmt(0);
+    setTimeout(() => runCount(e, 0, to, dur), 250);
+  }
+  function renderHero() {
+    const box = $('#figs');
+    const fig = (label, n, fmt, text) => {
+      const v = el('span', { class: 'fig-n' });
+      box.append(el('div', { class: 'fig' }, v, el('span', { class: 'fig-l', text: label })));
+      if (n == null) v.textContent = text; else countUpOnce(v, n, fmt);
+    };
+    const rs = within(maxR), dec = decided(rs), ap = dec.filter(x => x.outcome === 'Approved');
+    if (unchecked('neighbour_coa')) fig(`Within ${maxR} m`, null, null, 'Couldn’t be checked');
+    else if (dec.length) fig(`Decided applications within ${maxR} m`, ap.length, v => `${v} of ${dec.length} approved`);
+    else fig(`Within ${maxR} m`, null, null, rs.length ? `${rs.length} on file` : 'No applications');
+    const tw = typicalWeeks(timing(rs));
+    if (tw && !unchecked('neighbour_coa')) fig(`${tw.recent ? 'Recent median' : 'Median'} from filing`, tw.w, v => `${v} weeks to a hearing`);
+    const h = R.envelope.height_m, fsi = tokOf('fsi') || tokOf('total_fsi');
+    if (h) fig('As-of-right envelope', Number(h), v => `${v} m${fsi ? ` · ${fsi.value} FSI` : ''}`);
+    else if (Z.code) fig('Zone', null, null, Z.code);
+    const chips = $('#hero-chips');
+    rs.filter(x => x.ref).sort((a, b) => a.d - b.d).slice(0, 5).forEach(x => {
+      const b = numButton(x, null, 'hero-chip');
+      b.textContent = '';
+      b.append(icon(x.outcome), el('span', { text: x.ref }), el('span', { class: 'd', text: `${x.d} m` }));
+      chips.append(b);
+    });
+  }
+  // ---------- planner's read: the numbers it cites ----------
+  function renderCited() {
+    const ul = $('#cited');
+    const text = R.summary.text || '';
+    const seen = new Set();
+    const add = li => ul.append(li);
+    const recRe = /\b(A\d{4}\/\d{2}[A-Z]{2,4}|\d{2} \d{6} [A-Z]{3} \d{2} [A-Z]{2}|\d{2} \d{6})\b/g;
+    for (const m of text.matchAll(recRe)) {
+      const x = byNumber.get(m[1]);
+      if (!x || seen.has(x.id)) continue;
+      seen.add(x.id);
+      const what = recKind(x.id) === 'coa' ? `${x.app} · ${x.label}` : recKind(x.id) === 'permit' ? `Permit · ${x.status_text}` : x.type_name;
+      add(el('li', {}, numButton(x), el('span', { text: `${x.addr}${x.d ? ` · ${x.d} m` : ' · this lot'} · ${what}` })));
+    }
+    const figs = [
+      [/\b\d+ of \d+\b[^.;]*?approved|\b\d+ of \d+ decided\b/i, '#precedent', 'Decided applications within the radius'],
+      [/\b\d+%/, '#precedent', 'Approval rate'],
+      [/\b\d+ (?:three-storey )?new houses?\b|\b\d+ three-storey\b/i, '#precedent', 'Approved new houses'],
+      [/\b\d+ weeks\b/, '#precedent', 'Median time to a hearing'],
+      [/\b\d+ days\b/, '#history', 'This lot’s time to a decision'],
+    ];
+    figs.forEach(([re, href, label]) => {
+      const m = text.match(re);
+      if (m && !seen.has(m[0])) { seen.add(m[0]); add(el('li', {}, el('a', { class: 'fig-link', href, text: m[0] }), el('span', { text: label }))); }
+    });
+    if (!ul.children.length) ul.append(el('li', { text: 'No file numbers or figures cited.' }));
+  }
+
+  function renderStatic() {
+    document.title = `${R.address} Zoning Report`;
+    $('#addr-h').textContent = R.address;
+    $('#badge').textContent = R.summary.source === 'claude' ? 'Summary by Claude from computed facts' : 'Built from a live agent run';
+    const chip = $('#zone-chip');
+    if (Z.code) { chip.textContent = Z.code; chip.title = `${zoneName} zone`; } else chip.hidden = true;
+    const meta = $('#meta');
+    [R.fsa && `Postal area ${R.fsa}`, R.ward && R.ward.replace('-', '–'), R.district && `District ${R.district}`, `Run ${fmtDate(R.generated)}`]
+      .filter(Boolean).forEach(t => meta.append(el('span', { text: t })));
+    $('#lnk-map').href = R.links.map;
+    $('#lnk-sv').href = R.links.street_view;
+    const nav = $('#links');
+    const F = R.files || {};
+    if (R.links.zoning_map) nav.append(el('a', { href: R.links.zoning_map, target: '_blank', rel: 'noopener', text: 'City Zoning Map ↗', title: 'The City’s zoning map, centred on this lot' }));
+    if (F.workbook) { const x = $('#pill-xl'); x.href = F.workbook; x.title = 'Summary, lot briefs and every record, in the same folder as this report'; x.hidden = false; }
+    if (F.json) nav.append(el('a', { href: F.json, text: 'Report Data (JSON)' }));
+    warnBanner();
+    renderVerdict();
+    renderHero();
+
+    // summary
+    $('#lead').textContent = R.summary.text;
+    renderCited();
+    $('#lead-note').textContent = R.summary.source === 'claude'
+      ? `Written by Claude (${R.summary.model_version}) from the computed facts below. Every number in it was checked against those facts before it was used; the counts, dates and file numbers come from fixed rules.`
+      : 'Written from the computed facts below by a fixed template. Every number comes from City of Toronto Open Data.';
+
+    // answers
+    const h = R.envelope.height_m, fsi = tokOf('fsi'), front = tokOf('frontage_m'), ex = tokOf('exception');
+    const a1 = [];
+    if (h) a1.push(`${h} m high`);
+    if (fsi) a1.push(`${fsi.value} FSI`);
+    else if (tokOf('total_fsi')) a1.push(`${tokOf('total_fsi').value} FSI total`);
+    $('#a1-big').textContent = a1.length ? a1.join(' · ') : (Z.raw || (Z.source === 'outside_zoning_map' ? 'Not on the zoning map' : 'Zone not resolved'));
+    const sub1 = [];
+    if (Z.code) sub1.push(`${zoneName} zone`);
+    if (front) sub1.push(`${front.tok.slice(1)} m minimum frontage`);
+    $('#a1-sub').textContent = sub1.join(', ') + (sub1.length ? '.' : '') + (ex ? ` Exception ${ex.value} applies.` : '');
+
+    const S = R.subject.coa.slice().sort((a, b) => (a.hearing || a.filed).localeCompare(b.hearing || b.filed));
+    const lastDec = S.filter(x => x.outcome === 'Approved' || x.outcome === 'Refused').pop();
+    const house = R.subject.permits.find(p => p.category === 'New building') || R.subject.permits[0];
+    if (unchecked('subject_coa') && unchecked('subject_permits')) {
+      $('#a2-big').textContent = 'Couldn’t be checked';
+      $('#a2-sub').textContent = 'The City’s application and permit data wasn’t reachable for this run.';
+    } else {
+      $('#a2-big').textContent = lastDec ? `${lastDec.app === 'Consent' ? 'Consent' : 'Variance'} ${lastDec.outcome.toLowerCase()} ${lastDec.hearing.slice(0, 4)}`
+        : (S.length ? `${S.length} application${S.length > 1 ? 's' : ''} on file` : 'No variance on record');
+      $('#a2-sub').textContent = house
+        ? (house.issued ? `${house.category === 'New building' ? 'New-building' : 'Building'} permit issued ${fmtMonth(house.issued)}, now ${house.status_text}.` : `Building permit applied for ${fmtMonth(house.applied)}, ${house.status_text}.`)
+        : (unchecked('subject_permits') ? 'Building permits couldn’t be checked.' : 'No building permit on record.');
+    }
+    $('#a3-label').textContent = `Within ${maxR} m`;
+    if (unchecked('neighbour_coa')) {
+      $('#a3-big').textContent = 'Couldn’t be checked';
+      $('#a3-sub').textContent = 'Neighbour applications weren’t reachable. This is missing data, not a result.';
+    } else {
+      const rs = within(maxR), dec = decided(rs), ap = dec.filter(x => x.outcome === 'Approved');
+      const n3 = ap.filter(x => x.type === 'New house' && x.storeys === 3).length;
+      const tw = typicalWeeks(timing(rs));
+      $('#a3-big').textContent = dec.length ? `${ap.length} of ${dec.length} approved` : (rs.length ? `${rs.length} on file, none decided` : 'No applications on record');
+      $('#a3-sub').textContent = (dec.length ? `Decided applications${n3 ? `, including ${plural(n3, 'three-storey new house', 'three-storey new houses')}` : ''}.` : '')
+        + (tw ? ` ${tw.recent ? 'Recent hearings' : 'Hearings'} a median ${tw.w} weeks after filing.` : '');
+    }
+
+    renderZone();
+    renderBylaw();
+    renderFacts();
+    renderTimeline();
+
+    // controls note + limits + sources
+    $('#ctl-note').textContent = `This run collected applications up to ${maxR} m. The agent’s --radius-m setting raises that limit.`;
+    const ul = $('#source-list');
+    if (R.datasets && R.datasets.length) {
+      R.datasets.forEach(d => ul.append(el('li', {}, el('a', { href: d.url, target: '_blank', rel: 'noopener', text: d.title }), el('span', { text: ` · ${d.used_for}` }))));
+    } else R.sources.forEach(s => ul.append(el('li', { text: s })));
+    const tn = $('#trace-note');
+    tn.append('Every file, permit and application number opens its record card, with every field the City publishes and where to get its documents: the ');
+    tn.append(el('a', { href: (R.links && R.links.aic) || '#', target: '_blank', rel: 'noopener', text: 'Application Information Centre' }));
+    tn.append(' while it still lists a file (it drops Committee of Adjustment files about 90 days after they’re final), otherwise Committee of Adjustment staff or the ');
+    tn.append(el('a', { href: (R.links && R.links.research_request) || '#', target: '_blank', rel: 'noopener', text: 'Research Request Portal' }));
+    tn.append('; ');
+    tn.append(el('a', { href: (R.links && R.links.permit_status) || '#', target: '_blank', rel: 'noopener', text: 'Building Application Status' }));
+    tn.append(' for current permits, or a ');
+    tn.append(el('a', { href: (R.links && R.links.building_records) || '#', target: '_blank', rel: 'noopener', text: 'building records request' }));
+    tn.append(' for older ones. Each card also links the raw Open Data row.');
+    $('#limits').textContent = `Precedent covers applications in the ${R.fsa || 'subject’s'} postal area only, so applications just across its boundary are missing. The City’s open data describes each project but not which by-law rules were varied or by how much, so this report can’t compare requested and permitted numbers. Exception and by-law text isn’t read, and the Official Plan land-use designation isn’t loaded. Only ${R.permits.filter(p => p.linked_coa.length).length} of ${R.permits.length} nearby permit projects cite a variance decision, so "built" links are a floor, not a count.`;
+    const cl = $('#completeness');
+    const STATE = { found: 'records found', none: 'checked, none found', unchecked: 'couldn’t be checked', skipped: 'skipped for this run' };
+    Object.entries(C).forEach(([k, v]) => {
+      const li = el('li', {}, el('span', { text: `${(SRC[k] || k).replace(/^./, c => c.toUpperCase())}: ` }));
+      li.append(v === 'unchecked' ? el('span', { class: 'unchecked', text: STATE[v] }) : el('span', { text: STATE[v] || v }));
+      cl.append(li);
+    });
+    const f = $('#foot');
+    f.append(el('span', {}, `${R.licence} `, el('a', { href: 'https://open.toronto.ca/open-data-licence/', target: '_blank', rel: 'noopener', text: 'Licence ↗' })),
+      el('span', { text: `Parcis Zoning Agent report, generated ${fmtDate(R.generated)}. Not a legal opinion; confirm with the City before relying on it.` }));
+    if (R.notice) f.append(el('span', { class: 'notice', text: R.notice }));
+  }
+
+  function renderZone() {
+    const zs = $('#zone-string');
+    zs.setAttribute('aria-label', `Zone string ${Z.raw || 'not resolved'}`);
+    const dl = $('#decode');
+    if (!Z.raw) {
+      if (unchecked('zone_map')) { zs.textContent = 'Couldn’t be checked'; return; }
+      zs.textContent = 'Not on the City-wide zoning map';
+      dl.append(el('div', {}, el('dt', { text: '' }), el('dd', { text: 'No By-law 569-2013 zone covers this lot, so a former municipal zoning by-law probably applies. Check with the City before relying on any envelope.' })));
+      return;
+    }
+    if (!Z.parsed) { zs.textContent = Z.raw; dl.append(el('div', {}, el('dt', { text: '' }), el('dd', { text: 'This zone string couldn’t be decoded; read it against By-law 569-2013.' }))); return; }
+    // Highlight each decoded token inside the raw string.
+    let rest = Z.raw;
+    (Z.tokens || []).forEach(t => {
+      const i = rest.indexOf(t.tok);
+      if (i < 0) return;
+      zs.append(rest.slice(0, i), el('span', { class: 'tok', text: t.tok }));
+      rest = rest.slice(i + t.tok.length);
+    });
+    zs.append(rest);
+    const EXTRA = {
+      zone: ZONE_BASE[Z.code] || '',
+      frontage_m: 'Matters for any severance.',
+      fsi: t => `Gross floor area up to ${t.value} × lot area.`,
+      total_fsi: 'Commercial and residential floor area combined.',
+      exception: 'Read its text before design; it can change the standard rules.',
+      standard_set: 'Sets the building standards that apply in this CR zone.',
+      unknown: '',
+    };
+    (Z.tokens || []).forEach(t => {
+      const extra = typeof EXTRA[t.key] === 'function' ? EXTRA[t.key](t) : (EXTRA[t.key] || '');
+      const dd = el('dd', {}, el('strong', { text: t.key === 'unknown' ? `${t.tok}: not decoded.` : `${t.label}.` }), extra ? ' ' + extra : '');
+      dl.append(el('div', {}, el('dt', { text: t.tok }), dd));
+    });
+  }
+
+  function renderBylaw() {
+    const box = $('#bylaw');
+    const ZL = Z.links || {};
+    const add = (url, text) => { if (url) box.append(el('a', { href: url, target: '_blank', rel: 'noopener', text: `${text} ↗` })); };
+    if (ZL.chapter) add(ZL.chapter.url, ZL.chapter.label);
+    if (ZL.exception) add(ZL.exception.url, ZL.exception.label);
+    if (R.links && R.links.zoning_map) add(R.links.zoning_map, 'City Zoning Map at This Lot');
+    box.hidden = !box.children.length;
+  }
+
+  function renderFacts() {
+    const facts = $('#facts');
+    const E = R.envelope;
+    const fact = (dt, main, small, warn) => {
+      const dd = el('dd', {});
+      dd.append(warn ? el('span', { class: 'unchecked', text: main }) : main);
+      if (small) dd.append(el('small', { text: small }));
+      facts.append(el('div', {}, el('dt', { text: dt }), dd));
+    };
+    const layer = (k, found, none, foundSmall) => {
+      if (C[k] === 'unchecked') return ['Couldn’t be checked ⚠', 'The layer failed to load for this run', true];
+      if (C[k] === 'skipped') return ['Not checked', 'Skipped for this run', false];
+      return found ? [found, foundSmall, false] : [none, '', false];
+    };
+    let v = layer('height', E.height_m && `${E.height_m} m`, 'No height overlay at this lot', E.height_string && `Height overlay ${E.height_string}`);
+    fact('Maximum height', ...v);
+    v = layer('coverage', E.coverage_pct && `${E.coverage_pct}%`, 'No lot coverage overlay at this lot');
+    if (!E.coverage_pct && C.coverage === 'none' && E.coverage_nearest_m != null) v[1] = `Nearest coverage area is about ${(E.coverage_nearest_m / 1000).toFixed(1)} km away`;
+    fact('Lot coverage overlay', ...v);
+    fact('Building setback overlay', ...layer('setback', E.setback_label, 'None at this lot'));
+    fact('Secondary plan', ...layer('secondary_plan', E.secondary_plan, 'None'));
+    fact('Site and area specific policy', ...layer('area_specific', E.area_specific_policy && `SASP ${E.area_specific_policy}`, 'None'));
+    const zsrc = { zoning_map: 'City zoning map', coa_designation: 'This lot’s variance file', outside_zoning_map: 'Not on the By-law 569-2013 map', unresolved: 'Not resolved' }[Z.source] || Z.source;
+    const lastRef = (R.subject.coa[0] || {}).ref;
+    let zsmall = '';
+    if (Z.source === 'zoning_map' && Z.coa_string) zsmall = Z.matches_coa ? `Matches variance file ${lastRef || ''}`.trim() : `Variance file lists ${Z.coa_string}`;
+    fact('Zone source', zsrc, zsmall, Z.source === 'unresolved' && unchecked('zone_map'));
+  }
+
+  function renderTimeline() {
+    const ol = $('#timeline');
+    if (unchecked('subject_coa') && unchecked('subject_permits')) {
+      ol.append(el('li', {}, el('time', { text: '' }), el('div', { class: 'ev' }, el('h3', { text: 'History couldn’t be checked' }),
+        el('p', { text: 'The City’s Committee of Adjustment and permit data wasn’t reachable for this run. This is missing data, not a result.' }))));
+      return;
+    }
+    const ev = [];
+    R.subject.coa.forEach(c => {
+      ev.push({ date: c.filed, title: `${c.app} filed`, files: [c.ref], text: c.desc });
+      if (c.outcome === 'Approved' || c.outcome === 'Refused') {
+        ev.push({ date: c.hearing, title: `${c.app === 'Consent' ? 'Consent' : 'Variance'} ${c.outcome.toLowerCase()} by the Committee of Adjustment`, files: [c.ref],
+          text: [c.days != null ? `${c.days} days after filing.` : '', c.appeal ? `Appeal: ${c.appeal}.` : ''].join(' ').trim(), bad: c.outcome === 'Refused' });
+      } else if (c.hearing || c.outcome === 'Pending') {
+        ev.push({ date: c.hearing || c.filed, title: c.label, files: [c.ref] });
+      }
+    });
+    const byApplied = {};
+    R.subject.permits.forEach(p => { if (p.applied) (byApplied[p.applied] = byApplied[p.applied] || []).push(p); });
+    Object.entries(byApplied).forEach(([d, ps]) => {
+      const kinds = [...new Set(ps.map(p => p.category === 'New building' ? 'new-building' : p.category.toLowerCase()))];
+      ev.push({ date: d, title: `${kinds.join(' and ').replace(/^./, c => c.toUpperCase())} permit${ps.length > 1 ? 's' : ''} applied for`, files: ps.map(p => p.root) });
+    });
+    R.subject.permits.forEach(p => {
+      const clean = (p.desc || '').replace(/^[A-Za-z()]+\s+-\s+/, '').split(' See also')[0];
+      const extra = [];
+      if (!p.cost_unreliable && p.cost) extra.push(`Estimated cost ${money(p.cost)}.`);
+      if (p.linked_coa.length) extra.push(`Cites variance ${p.linked_coa.join(', ')}.`);
+      const noun = p.category === 'New building' ? 'New-building permit' : p.category === 'Demolition' ? 'Demolition permit' : 'Building permit';
+      if (p.issued) ev.push({ date: p.issued, title: `${noun} issued`, files: [p.root], text: [clean, ...extra].join(' ') });
+      if (p.completed) ev.push({ date: p.completed, title: `${noun} closed`, files: [p.root] });
+    });
+    const open = R.subject.permits.find(p => p.category === 'New building' && !p.completed) || R.subject.permits.find(p => !p.completed);
+    if (open) ev.push({ date: R.generated, title: 'Status at this run', text: `Permit ${open.root}: ${open.status_text}.`, now: true });
+    if (!ev.length) {
+      ol.append(el('li', {}, el('time', { text: '' }), el('div', { class: 'ev' }, el('h3', { text: 'No history on record' }),
+        el('p', { text: 'The City has no Committee of Adjustment file or building permit recorded for this address since 2017.' }))));
+      return;
+    }
+    ev.sort((a, b) => a.date.localeCompare(b.date));
+    const recOf = {};
+    R.subject.coa.forEach(c => { recOf[c.ref] = c; });
+    R.subject.permits.forEach(p => { recOf[p.root] = p; });
+    ev.forEach(e => {
+      const hh = el('h3', {}, el('span', { text: e.title }));
+      (e.files || []).forEach(f => {
+        hh.append(recOf[f] ? numButton(recOf[f], f, 'file') : el('span', { class: 'file', text: f }));
+      });
+      const box = el('div', { class: 'ev' }, hh);
+      if (e.text) box.append(el('p', { text: e.text }));
+      ol.append(el('li', { class: e.now ? 'now' : e.bad ? 'bad' : '' }, el('time', { datetime: e.date, text: fmtDate(e.date) }), box));
+    });
+    if (unchecked('subject_permits')) ol.append(el('li', {}, el('time', { text: '' }), el('div', { class: 'ev' }, el('h3', {}, el('span', { class: 'unchecked', text: 'Building permits couldn’t be checked' })))));
+  }
+
+  // ---------- map ----------
+  const M = { map: null, coa: new Map(), permits: new Map(), groups: {}, circle: null, ok: false };
+  function popupCoA(r) {
+    const box = el('div', { class: 'pop' },
+      el('strong', {}, icon(r.outcome), el('span', { text: r.label })),
+      el('div', { text: `${r.addr} · ${r.d} m away` }),
+      el('div', { class: 's mono', text: `${r.app} ${r.ref}` }),
+      el('div', { class: 's', text: r.type + (r.storeys ? ` · ${storeyTxt(r.storeys)} storeys` : '') }),
+      el('div', { class: 's', text: `Filed ${fmtDate(r.filed)}` + (r.hearing ? ` · hearing ${fmtDate(r.hearing)}` : '') + (r.days != null ? ` (${weeks(r.days)} weeks)` : '') }));
+    if (r.desc) box.append(el('div', { class: 'q', text: `Asked: ${r.desc.length > 220 ? r.desc.slice(0, 217) + '…' : r.desc}` }));
+    if (r.appeal) box.append(el('div', { class: 's', text: `Appeal: ${r.appeal}` }));
+    if (r.permits.length) box.append(el('div', { class: 's', text: `Built under permit ${r.permits.join(', ')}` }));
+    box.append(linkRow(r.links, r));
+    return box;
+  }
+  function popupPermit(p) {
+    const box = el('div', { class: 'pop' },
+      el('strong', {}, icon(permitKind(p.category)), el('span', { text: `Permit: ${p.category.toLowerCase()}` })),
+      el('div', { text: `${p.addr} · ${p.d} m away` }),
+      el('div', { class: 's mono', text: `Permit ${p.root}` }),
+      el('div', { class: 's', text: `${p.types.join('; ')} · ${p.status_text}` }),
+      el('div', { class: 's', text: [p.applied && `Applied ${fmtDate(p.applied)}`, p.issued && `issued ${fmtDate(p.issued)}`, p.completed && `closed ${fmtDate(p.completed)}`].filter(Boolean).join(' · ') }));
+    const clean = (p.desc || '').replace(/^[A-Za-z()]+\s+-\s+/, '');
+    if (clean) box.append(el('div', { class: 'q', text: clean.length > 220 ? clean.slice(0, 217) + '…' : clean }));
+    const extra = [];
+    if (p.cost != null) extra.push(p.cost_unreliable ? `Cost ${money(p.cost)} ⚠ unreliable` : `Estimated cost ${money(p.cost)}`);
+    if (p.units) extra.push(`${p.units} unit(s) created`);
+    if (extra.length) box.append(el('div', { class: 's', text: extra.join(' · ') }));
+    if (p.linked_coa.length) box.append(el('div', { class: 's', text: `Cites variance ${p.linked_coa.join(', ')}` }));
+    box.append(linkRow(p.links, p));
+    return box;
+  }
+  function linkRow(l, x) {
+    const row = el('div', { class: 'lk' });
+    if (x) row.append(numButton(x, 'Record card', 'src-btn'));
+    if (l.map) row.append(el('a', { href: l.map, target: '_blank', rel: 'noopener', text: 'Google Maps ↗' }));
+    if (l.street_view) row.append(el('a', { href: l.street_view, target: '_blank', rel: 'noopener', text: 'Street View ↗' }));
+    return row;
+  }
+  function divIcon(kind, extra = '', size = 18) {
+    const s = svgEl('svg', { width: size, height: size, viewBox: '-3 -3 18 18', 'aria-hidden': 'true' });
+    s.append(shape(kind, 6, 6));
+    return L.divIcon({ className: `mk-icon ${extra}`.trim(), html: s.outerHTML, iconSize: [size, size], iconAnchor: [size / 2, size / 2], popupAnchor: [0, -8] });
+  }
+  const isDark = () => document.documentElement.dataset.theme !== 'light';
+  const tileUrl = () => (isDark() && R.map.tile_url_dark ? R.map.tile_url_dark : R.map.tile_url);
+  function mapNote(text) { const n = $('#map-note'); n.textContent = text; n.hidden = false; }
+
+  function buildMap() {
+    const box = $('#map');
+    if (typeof L === 'undefined' || R.lat == null) {
+      box.classList.add('map-fallback');
+      box.textContent = 'The map couldn’t load here. Everything else in the report still works; the table lists every application with its distance.';
+      return;
+    }
+    try {
+      const map = L.map(box, { scrollWheelZoom: false, zoomSnap: 0.5 });
+      M.map = map;
+      // Dark theme: a provider's own dark tiles when configured, else the light tiles
+      // through a CSS filter (--tile-filter), which print and the light theme drop.
+      const tiles = L.tileLayer(tileUrl(), { attribution: R.map.tile_attribution, maxZoom: 21, maxNativeZoom: R.map.tile_max_zoom || 20, subdomains: 'abcd' });
+      M.tiles = tiles;
+      let loaded = 0, failed = 0;
+      tiles.on('tileload', () => { loaded++; });
+      tiles.on('tileerror', () => { failed++; });
+      tiles.addTo(map);
+      setTimeout(() => {
+        if (!loaded && (failed || !navigator.onLine)) mapNote('Map tiles couldn’t load (offline?). Pins, the radius and zoning areas still show, and the rest of the report works.');
+      }, 6000);
+
+      // zoning areas + height overlay
+      const zoneStyle = f => ({ className: 'zone-area', color: ZONE_FILL[f.properties.category] || ZONE_FILL.other, weight: isDark() ? 1.5 : 2, opacity: isDark() ? 0.75 : 0.95, fillOpacity: isDark() ? 0.06 : 0.16 });
+      M.restyle = () => zoning.setStyle(zoneStyle);
+      const zoning = L.geoJSON(R.map.zoning, {
+        style: zoneStyle,
+        interactive: true,
+        onEachFeature: (f, layer) => layer.bindPopup(() => el('div', { class: 'pop' },
+          el('strong', { text: f.properties.zone_string || f.properties.zone }),
+          el('div', { class: 's', text: `${(f.properties.category || '').replace(/^./, c => c.toUpperCase())} zone category` }))),
+      });
+      const height = L.geoJSON(R.map.height, {
+        style: { color: '#7a52c7', weight: 1.5, dashArray: '4 3', fillOpacity: 0.06 },
+        onEachFeature: (f, layer) => layer.bindPopup(() => el('div', { class: 'pop' },
+          el('strong', { text: `Height overlay ${f.properties.height_string || ''}`.trim() }),
+          el('div', { class: 's', text: f.properties.max_height_m ? `Maximum ${f.properties.max_height_m} m` : '' }))),
+      });
+      M.circle = L.circle([R.lat, R.lon], { radius: state.radius, color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1d5e8a', weight: 1.5, dashArray: '5 4', fill: false, interactive: false });
+      const lotIcon = L.divIcon({ className: 'mk-icon', html: subjectIcon(22).outerHTML, iconSize: [22, 22], iconAnchor: [11, 11] });
+      const lot = L.marker([R.lat, R.lon], { icon: lotIcon, zIndexOffset: 1000, title: `${R.address} (this lot)` })
+        .bindPopup(() => el('div', { class: 'pop' }, el('strong', { text: `${R.address} · this lot` }), el('div', { class: 's', text: Z.raw || '' }), linkRow(R.links)));
+      const radiusGroup = L.layerGroup([M.circle, lot]);
+
+      // stacked records at one address fan out a few metres so each pin is clickable
+      const fan = (list, key) => {
+        const at = new Map();
+        list.forEach(x => { if (x.lat == null) return; const k = `${x.lat.toFixed(6)},${x.lon.toFixed(6)}`; (at.get(k) || at.set(k, []).get(k)).push(x); });
+        at.forEach(xs => xs.forEach((x, i) => {
+          let lat = x.lat, lon = x.lon;
+          if (xs.length > 1) { const a = (-90 + i * 360 / xs.length) * Math.PI / 180, r = 6; lat += (r * Math.sin(a)) / 111000; lon += (r * Math.cos(a)) / (111000 * Math.cos(x.lat * Math.PI / 180)); }
+          x[key] = [lat, lon];
+        }));
+      };
+      fan(R.records, '_ll');
+      fan(R.permits, '_ll');
+      const coaGroup = L.layerGroup();
+      R.records.forEach(r => {
+        if (!r._ll) return;
+        const m = L.marker(r._ll, { icon: divIcon(r.outcome), title: `${r.addr}, ${r.label}`, riseOnHover: true }).bindPopup(() => popupCoA(r));
+        m.on('click', () => select(r.id, false));
+        M.coa.set(r.id, m);
+      });
+      Object.entries(PERMIT).forEach(([cat]) => { M.groups[cat] = L.layerGroup(); });
+      R.permits.forEach(p => {
+        if (!p._ll) return;
+        const m = L.marker(p._ll, { icon: divIcon(permitKind(p.category), 'pm', 13), title: `${p.addr}, permit ${p.root}`, zIndexOffset: -100 }).bindPopup(() => popupPermit(p));
+        M.permits.set(p.id, m);
+      });
+      const devGroup = L.layerGroup();
+      R.devapps.forEach(d => {
+        if (d.lat == null) return;
+        L.marker([d.lat, d.lon], { icon: divIcon('Rezoning'), title: `${d.addr}, ${d.type_name || d.type}` }).bindPopup(() => el('div', { class: 'pop' },
+          el('strong', {}, icon('Rezoning'), el('span', { text: d.type_name || d.type })),
+          el('div', { text: `${d.addr} · ${d.d} m away` }), el('div', { class: 's mono', text: d.no }),
+          el('div', { class: 's', text: `${d.status}${d.submitted ? ` · submitted ${fmtDate(d.submitted)}` : ''}` }),
+          d.desc ? el('div', { class: 'q', text: d.desc.slice(0, 240) }) : null, linkRow(d.links, d))).addTo(devGroup);
+      });
+      M.coaGroup = coaGroup;
+
+      zoning.addTo(map);
+      radiusGroup.addTo(map);
+      Object.entries(PERMIT).forEach(([cat, p]) => { if (p.on) M.groups[cat].addTo(map); });
+      coaGroup.addTo(map);
+      if (R.devapps.length) devGroup.addTo(map);
+      const overlays = {
+        'Lot and radius': radiusGroup,
+        'Committee of Adjustment': coaGroup,
+        'Permits: new buildings': M.groups['New building'],
+        'Permits: demolitions': M.groups['Demolition'],
+        'Permits: additions and alterations': M.groups['Addition or alteration'],
+        'Permits: other work': M.groups['Other'],
+        'Zoning areas': zoning,
+        'Height overlay': height,
+      };
+      if (R.devapps.length) overlays['Development applications'] = devGroup;
+      L.control.layers(null, overlays, { collapsed: true }).addTo(map);
+      L.control.scale({ imperial: false }).addTo(map);
+      map.fitBounds(M.circle.getLatLng().toBounds(maxR * 2.1));
+      if ('ResizeObserver' in window) new ResizeObserver(() => map.invalidateSize()).observe(box);
+      M.ok = true;
+      if (MOTION) setupMapIntro(box);
+      else box.classList.add('map-live');
+      if (unchecked('neighbour_coa')) mapNote('Neighbour applications couldn’t be checked for this run, so no application pins are shown. This is missing data, not a result.');
+    } catch (err) {
+      box.classList.add('map-fallback');
+      box.textContent = 'The map couldn’t load here. Everything else in the report still works.';
+      console.error(err);
+    }
+  }
+  // First time the map is ~35% in view: the radius draws, zoning fades in, then pins
+  // pop in by distance from the lot (about 2.5 s, once). Afterwards pins just fade.
+  function setupMapIntro(box) {
+    box.classList.add('intro-wait');
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { io.disconnect(); runMapIntro(box); } }), { threshold: 0.35 });
+    io.observe($('#map-card'));
+  }
+  function runMapIntro(box) {
+    const path = M.circle && M.circle._path;
+    if (path && path.getTotalLength) {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = `${len}`;
+      path.style.strokeDashoffset = `${len}`;
+      path.getBoundingClientRect();
+      path.style.transition = 'stroke-dashoffset .8s ease';
+      path.style.strokeDashoffset = '0';
+      setTimeout(() => { path.style.transition = ''; path.style.strokeDasharray = ''; path.style.strokeDashoffset = ''; }, 900);
+    }
+    const pins = [];
+    M.coa.forEach((m, id) => { const e = m.getElement(); if (e) pins.push([REC.get(id).d, e]); });
+    M.permits.forEach((m, id) => { const e = m.getElement(); if (e) pins.push([REC.get(id).d, e]); });
+    pins.sort((a, b) => a[0] - b[0]);
+    pins.forEach(([, e], i) => e.style.setProperty('--pd', `${Math.round(900 + (i / Math.max(1, pins.length)) * 1300)}ms`));
+    box.classList.add('intro-run');
+    requestAnimationFrame(() => requestAnimationFrame(() => box.classList.remove('intro-wait')));
+    setTimeout(() => {
+      box.classList.remove('intro-run');
+      box.querySelectorAll('.mk-icon').forEach(e => { e.style.removeProperty('--pd'); e.classList.add('old'); });
+      box.classList.add('map-live');
+      M.live = true;
+    }, 2700);
+  }
+  function syncGroup(group, want) {
+    group.eachLayer(m => {
+      if (want.has(m)) return;
+      const e = m.getElement();
+      if (M.live && MOTION && e) {
+        e.classList.add('pin-out');
+        setTimeout(() => { if (!m._keep) group.removeLayer(m); if (e) e.classList.remove('pin-out'); }, 200);
+      } else group.removeLayer(m);
+      m._keep = false;
+    });
+    want.forEach(m => { m._keep = true; if (!group.hasLayer(m)) group.addLayer(m); });
+  }
+  function updateMap(rs) {
+    if (!M.ok) return;
+    M.circle.setRadius(state.radius);
+    const show = new Set(tableRows(rs).map(r => r.id));
+    const coaWant = new Set();
+    M.coa.forEach((m, id) => { if (show.has(id)) coaWant.add(m); });
+    syncGroup(M.coaGroup, coaWant);
+    Object.entries(M.groups).forEach(([cat, g]) => {
+      const want = new Set();
+      R.permits.forEach(p => { const m = M.permits.get(p.id); if (m && p.category === cat && p.d <= state.radius && matchesQ(p)) want.add(m); });
+      syncGroup(g, want);
+    });
+    M.coa.forEach((m, id) => { const e = m.getElement(); if (e) e.classList.toggle('sel', id === state.sel); });
+  }
+  function hot(id, on) {
+    const m = M.coa.get(id);
+    const e = m && m.getElement();
+    if (e) e.classList.toggle('hot', on);
+  }
+  function panTo(id) {
+    const m = M.coa.get(id);
+    if (!M.ok || !m || !M.coaGroup.hasLayer(m)) return;
+    M.map.setView(m.getLatLng(), Math.max(M.map.getZoom(), 17), { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches });
+    m.openPopup();
+    const r = $('#map').getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) $('#map').scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
+  function renderLegend() {
+    const lg = $('#legend');
+    ['Approved', 'Refused', 'Pending', 'Other'].forEach(o => lg.append(el('li', {}, icon(o), el('span', { text: OUT[o].label }))));
+    lg.append(el('li', {}, subjectIcon(), el('span', { text: 'This lot' })));
+    Object.entries(PERMIT).forEach(([cat, p]) => lg.append(el('li', {}, icon(permitKind(cat)), el('span', { text: p.label + (p.on ? '' : ' (off by default)') }))));
+    if (R.devapps.length) lg.append(el('li', {}, icon('Rezoning'), el('span', { text: 'Development application' })));
+  }
+  function renderPermitLine() {
+    const line = $('#permit-line');
+    if (unchecked('neighbour_permits')) { line.replaceChildren(el('span', { class: 'unchecked', text: 'Neighbour building permits couldn’t be checked for this run.' })); return; }
+    const ps = R.permits.filter(p => p.d <= state.radius);
+    const c = {};
+    ps.forEach(p => { c[p.category] = (c[p.category] || 0) + 1; });
+    const built = within(state.radius).filter(r => r.permits.length).length;
+    line.textContent = ps.length
+      ? `Building-permit projects within ${state.radius} m: ${Object.keys(PERMIT).filter(k => c[k]).map(k => `${c[k]} ${k.toLowerCase()}`).join(', ')}. ${plural(built, 'application here is', 'applications here are')} cited by a permit.`
+      : `No building-permit projects on record within ${state.radius} m.`;
+  }
+
+  // ---------- controls ----------
+  const chipRefs = new Map();
+  function buildControls() {
+    const range = $('#radius');
+    range.min = String(Math.min(50, maxR));
+    range.max = String(maxR);
+    range.step = maxR % 25 ? '5' : '25';
+    range.value = String(state.radius);
+    range.addEventListener('input', () => { state.radius = Number(range.value); render(); });
+    const box = $('#type-chips');
+    ['All', ...TYPES].forEach(key => {
+      const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': 'false' }, el('span', { text: key }), el('span', { class: 'n' }));
+      b.addEventListener('click', () => { state.type = key; state.sel = null; render(); });
+      chipRefs.set(key, b);
+      box.append(b);
+    });
+    $('#outcome').addEventListener('change', e => { state.outcome = e.target.value; const rs = scoped(); renderTable(rs); updateMap(rs); });
+    $('#pcat').addEventListener('change', e => { pstate.cat = e.target.value; renderPermits(); });
+    $('#pq').addEventListener('input', e => { pstate.q = e.target.value; renderPermits(); });
+    document.querySelectorAll('#permits th button').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.pk;
+      if (pstate.key === k) pstate.dir *= -1;
+      else { pstate.key = k; pstate.dir = 1; }
+      renderPermits();
+    }));
+    $('#q').addEventListener('input', e => { state.q = e.target.value; const rs = scoped(); renderTable(rs); updateMap(rs); });
+    document.querySelectorAll('th[data-k] button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = btn.parentElement.dataset.k;
+        if (state.sortKey === k) state.sortDir *= -1;
+        else { state.sortKey = k; state.sortDir = 1; }
+        renderTable(scoped());
+      });
+    });
+  }
+  function updateChips() {
+    const rs = within(state.radius);
+    const counts = {};
+    rs.forEach(x => { counts[x.type] = (counts[x.type] || 0) + 1; });
+    if (state.type !== 'All' && !counts[state.type]) state.type = 'All';
+    chipRefs.forEach((b, key) => {
+      const n = key === 'All' ? rs.length : counts[key] || 0;
+      b.querySelector('.n').textContent = String(n);
+      b.setAttribute('aria-pressed', String(state.type === key));
+      b.disabled = key !== 'All' && n === 0;
+      b.hidden = key === 'Other' && !R.records.some(x => x.type === 'Other');
+    });
+    $('#radius-out').textContent = `${state.radius} m`;
+  }
+
+  // ---------- motion ----------
+  // Transform/opacity only, and only with the .motion class (set when the OS allows it).
+  const MOTION = document.documentElement.classList.contains('motion') && 'IntersectionObserver' in window;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  function runCount(e, from, to, dur = 900) {
+    cancelAnimationFrame(e._raf);
+    const t0 = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      const v = from + (to - from) * ease(k);
+      e._shown = v;
+      e.textContent = e._fmt(Math.round(v));
+      if (k < 1) e._raf = requestAnimationFrame(step);
+    };
+    e._raf = requestAnimationFrame(step);
+  }
+  // A KPI number: counts up (easeOutCubic, 2 s) when its section is about 35% in view,
+  // then from the old value to the new one (0.9 s) when the radius or type changes.
+  function kpi(e, target, fmt) {
+    e._fmt = fmt;
+    e._target = target;
+    if (target == null) { cancelAnimationFrame(e._raf); e._shown = null; e.textContent = fmt(null); return; }
+    if (!MOTION) { e.textContent = fmt(target); e._shown = target; return; }
+    if (!e._seen) { e.textContent = fmt(0); e._shown = 0; return; }
+    runCount(e, e._shown == null ? 0 : e._shown, target);
+  }
+  // Bars already on screen animate from their old length to the new one (0.9 s).
+  function flip(node, from, axis) {
+    const charts = document.querySelector('.charts');
+    if (!MOTION || !charts || !charts.classList.contains('in') || from == null || !isFinite(from) || from === 1) return;
+    node.style.transition = 'none';
+    node.style.transform = `scale${axis}(${Math.max(0, from)})`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      node.style.transition = 'transform .9s cubic-bezier(.22, 1, .36, 1)';
+      node.style.transform = '';
+    }));
+  }
+  const prevBars = new Map();
+  function finishMotion() {
+    document.querySelectorAll('.reveal, .charts').forEach(n => n.classList.add('in'));
+    document.querySelectorAll('.t-value').forEach(e => { e._seen = true; cancelAnimationFrame(e._raf); if (e._fmt && e._target != null) { e._shown = e._target; e.textContent = e._fmt(e._target); } });
+  }
+  function setupMotion() {
+    if (!MOTION) return;
+    const targets = document.querySelectorAll('.answers, .planner, .sec-head, .envelope > .card, .controls, .viz > .card, #records, .table-scroll, details.permits, .change > .card, .dev-table, .about, .foot');
+    targets.forEach(n => n.classList.add('reveal'));
+    const io = new IntersectionObserver(entries => {
+      const shown = entries.filter(en => en.isIntersecting).map(en => en.target)
+        .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+      shown.forEach((n, i) => {
+        n.style.setProperty('--d', String(Math.min(i, 6)));
+        n.classList.add('in');
+        io.unobserve(n);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    targets.forEach(n => io.observe(n));
+    // Precedent: tiles and charts start when they're about 35% up the viewport.
+    const tiles = [...document.querySelectorAll('.tile')];
+    tiles.forEach(n => n.classList.add('reveal'));
+    const tio = new IntersectionObserver(es => es.forEach(en => {
+      if (!en.isIntersecting) return;
+      tio.disconnect();
+      tiles.forEach((n, i) => {
+        n.style.setProperty('--d', String(i));
+        n.classList.add('in');
+        const v = n.querySelector('.t-value');
+        setTimeout(() => { v._seen = true; if (v._target != null) runCount(v, 0, v._target, 2000); }, i * 150);
+      });
+    }), { rootMargin: '0px 0px -35% 0px' });
+    if (tiles.length) tio.observe(tiles[0]);
+    const charts = document.querySelector('.charts');
+    if (charts) {
+      const cio = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { charts.classList.add('in'); cio.disconnect(); } }), { rootMargin: '0px 0px -35% 0px' });
+      cio.observe(charts);
+    }
+    window.addEventListener('beforeprint', finishMotion);
+  }
+
+  // ---------- tiles ----------
+  function renderTiles(rs) {
+    const set = (id, v, s) => { $('#' + id).textContent = v; $('#' + id + '-s').textContent = s; };
+    const num = (id, n, fmt, s) => { kpi($('#' + id), n, v => (v == null ? '–' : fmt(v))); $('#' + id + '-s').textContent = s; };
+    if (unchecked('neighbour_coa')) {
+      ['t-apps', 't-rate', 't-nh', 't-time'].forEach(id => { kpi($('#' + id), null, () => '–'); set(id, '–', 'Couldn’t be checked'); });
+      return;
+    }
+    const dec = decided(rs);
+    const ap = dec.filter(x => x.outcome === 'Approved');
+    const scope = state.type === 'All' ? `within ${state.radius} m` : `${state.type.toLowerCase()}, within ${state.radius} m`;
+    num('t-apps', rs.length, String, scope);
+    num('t-rate', dec.length ? Math.round((ap.length / dec.length) * 100) : null, v => `${v}%`, dec.length ? `${ap.length} of ${dec.length} decided` : 'No decisions in this selection');
+    if (state.type === 'All' || state.type === 'New house') {
+      const nh = ap.filter(x => x.type === 'New house');
+      const n3 = nh.filter(x => x.storeys === 3).length;
+      num('t-nh', nh.length, String, nh.length ? `${n3} of them three storeys` : 'None in this selection');
+    } else num('t-nh', null, String, 'Not in this selection');
+    const t = timing(rs);
+    if (t.nRecent >= 3) num('t-time', weeks(t.recent), v => `${v} weeks`, `Median of ${t.nRecent} filed since ${fmtMonth(cutoff)}; all years ${weeks(t.all)} weeks`);
+    else if (t.nAll >= 3) num('t-time', weeks(t.all), v => `${v} weeks`, `Median of ${t.nAll} decisions, all years`);
+    else num('t-time', null, String, 'Too few decisions to say');
+  }
+
+  // ---------- bars ----------
+  function renderBars(rs) {
+    const box = $('#type-bars');
+    box.replaceChildren();
+    if (unchecked('neighbour_coa')) { box.append(el('p', { class: 'empty', text: 'Neighbour applications couldn’t be checked.' })); $('#storey-bars').replaceChildren(); return; }
+    const types = TYPES.filter(t => rs.some(x => x.type === t));
+    const max = Math.max(1, ...types.map(t => rs.filter(x => x.type === t).length));
+    if (!types.length) box.append(el('p', { class: 'empty', text: 'No applications in this selection.' }));
+    types.forEach(t => {
+      const list = rs.filter(x => x.type === t);
+      const c = { Approved: 0, Refused: 0, Pending: 0, Other: 0 };
+      list.forEach(x => { c[x.outcome] += 1; });
+      const words = [];
+      if (c.Approved) words.push(`${c.Approved} approved`);
+      if (c.Refused) words.push(`${c.Refused} refused`);
+      if (c.Pending) words.push(`${c.Pending} awaiting hearing`);
+      if (c.Other) words.push(`${c.Other} deferred, withdrawn or no decision`);
+      const track = el('div', { class: 'track', role: 'img', 'aria-label': `${t}: ${words.join(', ')}` });
+      track.style.setProperty('--k', String(box.children.length));
+      const wNew = list.length / max;
+      track.style.width = `${wNew * 100}%`;
+      const wOld = prevBars.get('t:' + t);
+      prevBars.set('t:' + t, wNew);
+      if (wOld != null) flip(track, wOld / wNew, 'X');
+      ['Approved', 'Refused', 'Pending', 'Other'].forEach(o => {
+        if (!c[o]) return;
+        const s = el('span', { class: `seg seg-${o.toLowerCase()}`, title: `${c[o]} ${OUT[o].label.toLowerCase()}` });
+        s.style.flexGrow = String(c[o]);
+        track.append(s);
+      });
+      box.append(el('div', { class: 'bar-row' },
+        el('div', { class: 'bar-head' }, el('span', { text: t }), el('span', { class: 'v', text: String(list.length) })),
+        track,
+        el('div', { class: 'bar-sub', text: words.join(' · ') })));
+    });
+
+    const sb = $('#storey-bars');
+    sb.replaceChildren();
+    if (!(state.type === 'All' || state.type === 'New house')) {
+      sb.append(el('p', { class: 'empty', text: 'Choose All or New house to see storeys.' }));
+      return;
+    }
+    const nh = rs.filter(x => x.type === 'New house' && x.outcome === 'Approved');
+    const levels = [[3, '3 storeys'], [2.5, '2½ storeys'], [2, '2 storeys']];
+    const counts = levels.map(([s]) => nh.filter(x => x.storeys === s).length);
+    const mx = Math.max(1, ...counts);
+    levels.forEach(([, label], i) => {
+      const bar = el('div', { class: 'sbar', title: `${counts[i]} approved` });
+      bar.style.setProperty('--k', String(i));
+      const sNew = counts[i] / mx;
+      bar.style.width = `${sNew * 82}%`;
+      const sOld = prevBars.get('s:' + label);
+      prevBars.set('s:' + label, sNew);
+      if (sOld != null && sNew > 0) flip(bar, sOld / sNew, 'X');
+      sb.append(el('div', { class: 'srow' }, el('span', { text: label }), el('div', { class: 'sarea' }, bar, el('span', { class: 'sv', text: String(counts[i]) }))));
+    });
+    const otherN = nh.filter(x => x.storeys != null && ![3, 2.5, 2].includes(x.storeys)).length;
+    const unknown = nh.filter(x => x.storeys == null).length;
+    if (otherN) sb.append(el('p', { class: 'bar-sub', text: `${otherN} approved with another storey count` }));
+    if (unknown) sb.append(el('p', { class: 'bar-sub', text: `${unknown} approved without a storey count in the description` }));
+  }
+
+  // ---------- table ----------
+  function outcomeCell(r) {
+    return el('td', {}, el('span', { class: 'pill' }, icon(r.outcome), el('span', { text: r.label })));
+  }
+  function select(id, pan) {
+    state.sel = state.sel === id && !pan ? null : id;
+    const rs = scoped();
+    const visible = () => $(`#tbody tr[data-id="${CSS.escape(id)}"]`);
+    renderTable(rs);
+    if (state.sel && !visible()) {
+      state.outcome = 'All'; state.q = '';
+      $('#outcome').value = 'All'; $('#q').value = '';
+      renderTable(rs);
+      updateMap(rs);
+    }
+    M.coa.forEach((m, k) => { const e = m.getElement(); if (e) e.classList.toggle('sel', k === state.sel); });
+    if (pan && state.sel) panTo(id);
+  }
+  function renderTable(rs) {
+    const rows = tableRows(rs);
+    const k = state.sortKey, dir = state.sortDir;
+    const val = x => (k === 'outcome' ? OUT[x.outcome].order : x[k]);
+    rows.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      const na = va == null || va === '', nb = vb == null || vb === '';
+      if (na && nb) return a.d - b.d;
+      if (na) return 1;
+      if (nb) return -1;
+      const c = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb), 'en', { numeric: true });
+      return c * dir || a.d - b.d;
+    });
+    const tb = $('#tbody');
+    tb.replaceChildren();
+    if (unchecked('neighbour_coa')) {
+      tb.append(el('tr', {}, el('td', { colspan: '6', class: 'empty', text: 'Neighbour applications couldn’t be checked for this run (City data unreachable). This is missing data, not a result.' })));
+      $('#count').textContent = '';
+      return;
+    }
+    rows.forEach(r => {
+      const tr = el('tr', { 'data-id': r.id, class: state.sel === r.id ? 'sel' : '', tabindex: '0' });
+      const cell = el('td', {}, el('div', { class: 'addr', text: r.addr }));
+      if (r.desc) {
+        const long = r.desc.length > 110;
+        const open = state.expanded.has(r.id);
+        cell.append(el('div', { class: 'desc' + (long && !open ? ' clamp' : ''), text: r.desc }));
+        if (long) {
+          const b = el('button', { type: 'button', class: 'more', 'aria-expanded': String(open), text: open ? 'Show less' : 'Show all' });
+          b.addEventListener('click', e => {
+            e.stopPropagation();
+            open ? state.expanded.delete(r.id) : state.expanded.add(r.id);
+            renderTable(scoped());
+            const again = $(`#tbody tr[data-id="${CSS.escape(r.id)}"] .more`);
+            if (again) again.focus();
+          });
+          cell.append(b);
+        }
+      } else cell.append(el('div', { class: 'desc', text: 'No description on file' }));
+      const fileCell = el('td', { class: 'nowrap' }, r.ref ? numButton(r) : el('span', { class: 'mono', text: '–', title: 'No file number on record yet' }));
+      if (r.permits.length) fileCell.append(el('span', { class: 'built', text: `Built: permit ${r.permits.join(', ')}` }));
+
+      tr.append(
+        el('td', { class: 'num', text: String(r.d) }),
+        cell,
+        el('td', {}, r.type, r.storeys != null ? el('span', { class: 'sub', text: `${storeyTxt(r.storeys)} storeys` }) : null),
+        outcomeCell(r),
+        el('td', {}, el('span', { class: 'nowrap', text: r.hearing ? fmtDate(r.hearing) : '–' }),
+          r.days != null ? el('span', { class: 'sub', text: `${plural(weeks(r.days), 'week', 'weeks')} from filing` }) : null),
+        fileCell,
+      );
+      tr.addEventListener('mouseenter', () => hot(r.id, true));
+      tr.addEventListener('mouseleave', () => hot(r.id, false));
+      tr.addEventListener('click', () => select(r.id, true));
+      tr.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); select(r.id, true); } });
+      tb.append(tr);
+    });
+    if (!rows.length) tb.append(el('tr', {}, el('td', { colspan: '6', class: 'empty', text: rs.length ? 'No applications match. Clear the search or pick another outcome.' : `No Committee of Adjustment applications on record within ${state.radius} m.` })));
+    $('#count').textContent = `Showing ${rows.length} of ${rs.length} within ${state.radius} m`;
+    document.querySelectorAll('th[data-k]').forEach(th => {
+      const on = th.dataset.k === k;
+      th.setAttribute('aria-sort', on ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+      th.querySelector('.arr').textContent = on ? (dir > 0 ? '▲' : '▼') : '▲';
+    });
+  }
+
+  // ---------- decisions by year ----------
+  function renderYears(rs) {
+    const box = $('#year-chart');
+    box.replaceChildren();
+    if (unchecked('neighbour_coa')) { box.append(el('p', { class: 'empty', text: 'Neighbour applications couldn’t be checked.' })); return; }
+    const dec = decided(rs).filter(x => x.hearing);
+    if (!dec.length) { box.append(el('p', { class: 'empty', text: 'No decisions in this selection.' })); return; }
+    const ys = dec.map(x => Number(x.hearing.slice(0, 4)));
+    const y0 = Math.min(...ys), y1 = Math.max(...ys, Number((R.generated || '').slice(0, 4)) || 0);
+    const data = [];
+    for (let y = y0; y <= y1; y++) {
+      const inY = dec.filter(x => x.hearing.startsWith(String(y)));
+      data.push({ y, a: inY.filter(x => x.outcome === 'Approved').length, r: inY.filter(x => x.outcome === 'Refused').length });
+    }
+    const max = Math.max(1, ...data.map(d => d.a + d.r));
+    const H = 96;
+    const plot = el('div', { class: 'years', role: 'img', 'aria-label': 'Decisions per hearing year: ' + data.map(d => `${d.y}, ${d.a} approved, ${d.r} refused`).join('; ') });
+    data.forEach((d, i) => {
+      const col = el('div', { class: 'ycol' });
+      col.style.setProperty('--k', String(i));
+      const yNew = (d.a + d.r) / max, yOld = prevBars.get('y:' + d.y);
+      prevBars.set('y:' + d.y, yNew);
+      if (yOld != null && yNew > 0) requestAnimationFrame(() => flip(col, yOld / yNew, 'Y'));
+      const hA = d.a ? Math.max(3, Math.round(d.a / max * H)) : 0;
+      const hR = d.r ? Math.max(3, Math.round(d.r / max * H)) : 0;
+      if (d.a) { const s = el('span', { class: 'seg seg-approved', title: `${d.y}: ${plural(d.a, 'approved', 'approved')}` }); s.style.height = `${hA}px`; col.append(s); }
+      if (d.r) { const s = el('span', { class: 'seg seg-refused', title: `${d.y}: ${plural(d.r, 'refused', 'refused')}` }); s.style.height = `${hR}px`; col.append(s); }
+      if (d.a + d.r) { const n = el('span', { class: 'n', text: String(d.a + d.r) }); n.style.bottom = `${hA + hR + (d.a && d.r ? 2 : 0) + 3}px`; col.append(n); }
+      plot.append(col);
+    });
+    const axis = el('div', { class: 'yaxis', 'aria-hidden': 'true' });
+    data.forEach(d => axis.append(el('span', { text: data.length > 8 ? `’${String(d.y).slice(2)}` : String(d.y) })));
+    const key = el('div', { class: 'key' }, el('span', {}, el('i', { class: 'seg-approved' }), 'Approved'), el('span', {}, el('i', { class: 'seg-refused' }), 'Refused'));
+    box.append(plot, axis, key);
+  }
+
+  // ---------- permits table ----------
+  const pstate = { cat: 'All', q: '', key: 'd', dir: 1 };
+  function renderPermits() {
+    const tb = $('#ptbody');
+    tb.replaceChildren();
+    if (unchecked('neighbour_permits')) {
+      tb.append(el('tr', {}, el('td', { colspan: '7', class: 'empty', text: 'Neighbour building permits couldn’t be checked for this run. This is missing data, not a result.' })));
+      $('#pcount').textContent = '';
+      $('#permits-count').textContent = 'Couldn’t be checked';
+      return;
+    }
+    const inR = R.permits.filter(p => p.d <= state.radius);
+    const q = pstate.q.trim().toLowerCase();
+    const rows = inR.filter(p => (pstate.cat === 'All' || p.category === pstate.cat)
+      && (!q || `${p.addr} ${p.desc} ${p.root} ${(p.nums || []).join(' ')} ${p.status_text}`.toLowerCase().includes(q)));
+    const k = pstate.key, dir = pstate.dir;
+    const val = p => (k === 'cost' ? (p.cost_unreliable ? null : p.cost) : p[k]);
+    rows.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      const na = va == null || va === '', nb = vb == null || vb === '';
+      if (na && nb) return a.d - b.d;
+      if (na) return 1;
+      if (nb) return -1;
+      const c = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb), 'en', { numeric: true });
+      return c * dir || a.d - b.d;
+    });
+    rows.forEach(p => {
+      const clean = (p.desc || '').replace(/^[A-Za-z()]+\s+-\s+/, '');
+      const cell = el('td', {}, el('div', { class: 'addr', text: p.addr }), el('div', { class: 'desc clamp', text: clean || 'No description on file', title: clean }));
+      const idc = el('td', { class: 'nowrap' }, numButton(p));
+      if (p.linked_coa.length) idc.append(el('span', { class: 'built', text: `Cites ${p.linked_coa.join(', ')}` }));
+
+      tb.append(el('tr', {},
+        el('td', { class: 'num', text: String(p.d) }),
+        cell,
+        el('td', { text: p.category }),
+        el('td', { text: p.status_text || p.status || '–' }),
+        el('td', {}, el('span', { class: 'nowrap', text: p.applied ? fmtDate(p.applied) : '–' }),
+          el('span', { class: 'sub', text: p.issued ? `issued ${fmtDate(p.issued)}` : 'not issued' })),
+        el('td', { class: 'num', text: p.cost != null && !p.cost_unreliable ? money(p.cost) : '–', title: p.cost_unreliable ? 'No reliable declared cost' : '' }),
+        idc));
+    });
+    if (!rows.length) tb.append(el('tr', {}, el('td', { colspan: '7', class: 'empty', text: inR.length ? 'No permits match. Clear the search or pick another category.' : `No building-permit projects on record within ${state.radius} m.` })));
+    $('#pcount').textContent = `Showing ${rows.length} of ${inR.length} within ${state.radius} m`;
+    $('#permits-count').textContent = `${plural(inR.length, 'project', 'projects')} within ${state.radius} m`;
+    document.querySelectorAll('#permits th button').forEach(b => {
+      const on = b.dataset.pk === k;
+      b.parentElement.setAttribute('aria-sort', on ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+      b.querySelector('.arr').textContent = on ? (dir > 0 ? '▲' : '▼') : '▲';
+    });
+  }
+
+  // ---------- page chrome: theme toggle, section nav ----------
+  function setupTheme() {
+    const btn = $('#theme-btn');
+    const root = document.documentElement;
+    const sync = () => {
+      btn.textContent = isDark() ? 'Light' : 'Dark';
+      btn.setAttribute('aria-label', isDark() ? 'Switch to the light theme' : 'Switch to the dark theme');
+      $('#map').classList.toggle('own-dark-tiles', isDark() && !!R.map.tile_url_dark);
+      if (M.tiles && M.tiles._url !== tileUrl()) M.tiles.setUrl(tileUrl());
+      if (M.restyle) M.restyle();
+    };
+    btn.addEventListener('click', () => {
+      if (isDark()) root.dataset.theme = 'light'; else delete root.dataset.theme;
+      try { localStorage.setItem('parcis-theme', isDark() ? 'dark' : 'light'); } catch (e) { /* private mode */ }
+      sync();
+    });
+    sync();
+  }
+  // ---------- lot history as a scroll story ----------
+  // Desktop (900x700 or larger) with motion: the History sheet pins and reveals events
+  // one at a time, past to present, about 35% of a screen of scroll each (at most 2.5
+  // screens). It plays once: after the last event it unpins, drops the extra scroll
+  // length without moving what's on screen, and stays fully shown.
+  const STORY = {};
+  function setupStory() {
+    const story = $('#story'), pin = $('#story-pin');
+    const lis = [...document.querySelectorAll('#timeline > li')];
+    const showAll = () => lis.forEach(li => li.classList.add('shown', 'drawn'));
+    if (!MOTION || innerWidth < 900 || innerHeight < 700 || lis.length < 2 || pin.offsetHeight > innerHeight - 140) { showAll(); return; }
+    const n = lis.length;
+    const extra = Math.min(n * 0.35 * innerHeight, 2.5 * innerHeight);
+    story.classList.add('pinning');
+    story.style.height = `${pin.offsetHeight + extra}px`;
+    $('#story-bar').hidden = false;
+    let done = false, raf = 0;
+    const apply = k => {
+      lis.forEach((li, i) => { li.classList.toggle('shown', i < k); li.classList.toggle('drawn', i < k - 1); });
+      $('#story-count').textContent = `Event ${k} of ${n}`;
+    };
+    const finish = () => {
+      if (done) return;
+      done = true;
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onResize);
+      // keep whatever is on screen where it is while the extra length goes away
+      const next = story.closest('.sheetx').nextElementSibling;
+      const r = pin.getBoundingClientRect();
+      const anchor = r.bottom > 0 && r.top < innerHeight ? pin : next;
+      const before = anchor ? anchor.getBoundingClientRect().top : 0;
+      showAll();
+      story.classList.remove('pinning');
+      story.style.height = '';
+      $('#story-bar').hidden = true;
+      if (anchor) window.scrollBy({ top: anchor.getBoundingClientRect().top - before, behavior: 'instant' });
+    };
+    STORY.finish = finish;
+    const tick = () => {
+      raf = 0;
+      const top = story.getBoundingClientRect().top;
+      const k = Math.max(1, Math.min(n, 1 + Math.floor(((84 - top) / extra) * n)));
+      apply(k);
+      if (k >= n && 84 - top >= extra * ((n - 1) / n) + 40) finish();
+      else if (story.getBoundingClientRect().bottom < 0) finish();
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const onResize = () => { if (innerWidth < 900 || innerHeight < 700) finish(); };
+    $('#story-all').addEventListener('click', finish);
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onResize);
+    addEventListener('beforeprint', finish);
+    apply(1);
+  }
+
+  function setupToc() {
+    const nav = $('#pillnav'), menu = $('#menu-btn');
+    const setMenu = open => { nav.classList.toggle('menu-open', open); menu.setAttribute('aria-expanded', String(open)); };
+    menu.addEventListener('click', () => setMenu(!nav.classList.contains('menu-open')));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('menu-open')) { setMenu(false); menu.focus(); } });
+    const links = [...document.querySelectorAll('.pill-links a[href^="#"]')];
+    links.forEach(a => a.addEventListener('click', () => {
+      setMenu(false);
+      const id = a.getAttribute('href').slice(1);
+      if (id === 'history' && STORY.finish) STORY.finish(true);
+      const t = document.getElementById(id);
+      if (t && t.tagName === 'DETAILS') t.open = true;
+    }));
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(entries => entries.forEach(en => {
+      if (en.isIntersecting) links.forEach(a => a.setAttribute('aria-current', String(a.getAttribute('href') === `#${en.target.id}`)));
+    }), { rootMargin: '-40% 0px -55% 0px' });
+    links.forEach(a => { const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) io.observe(t); });
+  }
+
+  // ---------- signs of change ----------
+  function renderChange() {
+    const rs = within(state.radius);
+    const fill = (id, list, empty, line, isUnchecked) => {
+      const ul = $(id);
+      ul.replaceChildren();
+      if (isUnchecked) { ul.append(el('li', {}, el('span', { class: 'unchecked', text: 'Couldn’t be checked for this run.' }))); return; }
+      if (!list.length) { ul.append(el('li', { class: 'note', text: empty })); return; }
+      list.forEach(r => ul.append(line(r)));
+    };
+    fill('#chg-pending', rs.filter(x => x.outcome === 'Pending'), `None within ${state.radius} m.`, r =>
+      el('li', {}, el('strong', { text: `${r.addr} · ${r.d} m` }),
+        el('span', { class: 's', text: `${r.type}${r.storeys ? `, ${storeyTxt(r.storeys)} storeys` : ''}. Filed ${fmtDate(r.filed)}.` }), numButton(r)), unchecked('neighbour_coa'));
+    fill('#chg-sever', rs.filter(x => x.type === 'Severance or consent'), `None within ${state.radius} m.`, r =>
+      el('li', {}, el('strong', { text: `${r.addr} · ${r.d} m` }),
+        el('span', { class: 's', text: `${(r.desc || 'No description').split('. ')[0].replace(/\.$/, '')}. Filed ${fmtDate(r.filed)}; ${r.label.toLowerCase()}.` }), numButton(r)), unchecked('neighbour_coa'));
+    const cutoff3 = (() => { const [y, m, dd] = (R.generated || '').split('-'); return `${Number(y) - 3}-${m}-${dd}`; })();
+    const dv = R.devapps.filter(d => d.d <= state.radius && (d.open || (d.submitted || '') >= cutoff3));
+    fill('#chg-devapps', dv, `None open or submitted in the last 3 years within ${state.radius} m.` + (R.fsa_devapps != null ? ` The wider ${R.fsa} postal area has ${R.fsa_devapps} development applications on file.` : ''), d =>
+      el('li', {}, el('strong', { text: `${d.addr} · ${d.d} m` }),
+        el('span', { class: 's', text: `${d.type_name || d.type}, ${d.status}${d.submitted ? `. Submitted ${fmtDate(d.submitted)}` : ''}.` }),
+        d.desc ? el('span', { class: 's', text: d.desc.length > 180 ? d.desc.slice(0, 177) + '…' : d.desc }) : null,
+        numButton(d)), unchecked('dev_apps'));
+    renderDevTable();
+  }
+
+  function renderDevTable() {
+    const tb = $('#dtbody');
+    tb.replaceChildren();
+    if (unchecked('dev_apps')) { tb.append(el('tr', {}, el('td', { colspan: '6', class: 'empty', text: 'Development applications couldn’t be checked for this run. This is missing data, not a result.' }))); return; }
+    const rows = R.devapps.filter(d => d.d <= state.radius).sort((a, b) => a.d - b.d);
+    rows.forEach(d => tb.append(el('tr', {},
+      el('td', { class: 'num', text: String(d.d) }),
+      el('td', {}, el('div', { class: 'addr', text: d.addr }), el('div', { class: 'desc clamp', text: d.desc || 'No description on file', title: d.desc || '' })),
+      el('td', { text: d.type_name || d.type }),
+      el('td', { text: d.status }),
+      el('td', { class: 'nowrap', text: d.submitted ? fmtDate(d.submitted) : '–' }),
+      el('td', { class: 'nowrap' }, numButton(d)))));
+    if (!rows.length) tb.append(el('tr', {}, el('td', { colspan: '6', class: 'empty', text: `No development applications on record within ${state.radius} m.` })));
+    $('#dcount').textContent = `${plural(rows.length, 'application', 'applications')} within ${state.radius} m`;
+  }
+
+  function render() {
+    updateChips();
+    const rs = scoped();
+    renderTiles(rs);
+    renderBars(rs);
+    renderYears(rs);
+    renderTable(rs);
+    renderPermits();
+    renderChange();
+    renderPermitLine();
+    updateMap(rs);
+  }
+
+  renderStatic();
+  buildControls();
+  renderLegend();
+  buildMap();
+  setupTheme();
+  setupToc();
+  setupMotion();
+  setupCards();
+  render();
+  setupStory();
+})();
+</script>
+</body>
+</html>
